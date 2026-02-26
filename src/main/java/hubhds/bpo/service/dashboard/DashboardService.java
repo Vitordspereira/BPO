@@ -2,6 +2,7 @@ package hubhds.bpo.service.dashboard;
 
 import hubhds.bpo.dto.dashboard.DashboardRequest;
 import hubhds.bpo.dto.dashboard.DashboardResponse;
+import hubhds.bpo.dto.dashboard.resumo.DashboardResumoDTO;
 import hubhds.bpo.model.cadastro.Cadastro;
 import hubhds.bpo.model.cartao.Cartao;
 import hubhds.bpo.model.categoria.Categoria;
@@ -14,6 +15,7 @@ import hubhds.bpo.repository.dashboard.DashboardRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -76,5 +78,28 @@ public class DashboardService {
 
     public List<Object[]> buscarTotaisCards(Long idCadastro) {
         return dashboardRepository.buscarResumoFinanceiro(idCadastro);
+    }
+
+    //Busca lançamento do usuario
+
+    public DashboardResumoDTO buscarResumo(Long idcadastro) {
+        List<Dashboard> lancamento = dashboardRepository.findByCadastroIdCadastro(idcadastro);
+
+        //Soma as entradas (receita)
+        BigDecimal entradas = lancamento.stream()
+                .filter(d -> d.getTipo().name().equals("RECEITA"))
+                .map(Dashboard::getValor)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        //Soma as saídas (despesa)
+        BigDecimal saidas = lancamento.stream()
+                .filter(d -> d.getTipo().name().equals("DESPESA"))
+                .map(Dashboard::getValor)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        //Calcula o saldo
+        BigDecimal saldoFinal = entradas.subtract(saidas);
+
+        return new DashboardResumoDTO(entradas, saidas, saldoFinal, lancamento);
     }
 }

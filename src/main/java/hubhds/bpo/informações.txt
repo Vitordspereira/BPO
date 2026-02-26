@@ -1,8 +1,8 @@
 --habilitar cors para o Caique, colocar cors em uma classe unica inves de ficar nas controllers
 
--- adiiconar pix, e boleto no métodos de pagamentos e talvez separar cartão em credito e débito como enum ou sei la
-
 -- Criar um handler de erros
+
+-- Emilly quer que URL retorno telefone inves de email na URL, de apena um usuario
 
 2. No Front-end (HTML/JavaScript)
 Para que o usuário veja os pontos aparecendo enquanto digita, você pode usar uma máscara no campo do formulário.

@@ -35,9 +35,11 @@ public class DashboardController {
     }
 
     // Esse endpoint vai alimentar os Cards de Entradas/Saídas
-    @GetMapping("/resumo/{idCadastro}")
+    @GetMapping("/total/{idCadastro}")
     public ResponseEntity<List<Object[]>> buscarResumo(@PathVariable Long idCadastro) {
         List<Object[]> resumo = dashboardService.buscarTotaisCards(idCadastro);
         return ResponseEntity.ok(resumo);
     }
+
+
 }
