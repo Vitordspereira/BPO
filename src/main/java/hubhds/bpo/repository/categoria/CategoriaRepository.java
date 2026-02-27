@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
     //lista todas as categorias de cada usuário
-    List<Categoria> findByCadastro_IdCadastro(Long idCadastro);
+    List<Categoria> findByUsuario_IdUsuario(Long IdUsuario);
 }

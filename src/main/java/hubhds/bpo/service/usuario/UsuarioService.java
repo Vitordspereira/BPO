@@ -1,45 +1,46 @@
-package hubhds.bpo.service.cadastro;
+package hubhds.bpo.service.usuario;
 
-import hubhds.bpo.dto.cadastro.CadastroRequest;
-import hubhds.bpo.dto.cadastro.CadastroResponse;
-import hubhds.bpo.model.cadastro.Cadastro;
-import hubhds.bpo.repository.cadastro.CadastroRepository;
+import hubhds.bpo.dto.usuario.UsuarioRequest;
+import hubhds.bpo.dto.usuario.UsuarioResponse;
+import hubhds.bpo.model.usuario.Usuario;
+import hubhds.bpo.repository.usuario.UsuarioRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Service
-public class CadastroService {
+public class UsuarioService {
 
-    private final CadastroRepository cadastroRepository;
+    private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public CadastroService(CadastroRepository cadastroRepository, PasswordEncoder passwordEncoder) {
-        this.cadastroRepository = cadastroRepository;
+    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+        this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
-    public CadastroResponse cadastroResponse(CadastroRequest cadastroRequest) {
+    public UsuarioResponse usuarioResponse(UsuarioRequest usuarioRequest) {
         // 1. Verifica se o e-mail já existe no banco (Pode ter sido criado pela Hotmart)
-        Optional<Cadastro> usuarioExistente = cadastroRepository.findByEmail(cadastroRequest.email());
+        Optional<Usuario> usuarioExistente = usuarioRepository.findByTelefone(usuarioRequest.email());
 
         if (usuarioExistente.isPresent()) {
-            Cadastro usuario = usuarioExistente.get();
+            Usuario usuario = usuarioExistente.get();
 
             // Se a senha for nula, significa que ele comprou na Hotmart e está criando a senha AGORA
             if (usuario.getSenha() == null) {
-                usuario.setSenha(passwordEncoder.encode(cadastroRequest.senha()));
+                usuario.setSenha(passwordEncoder.encode(usuarioRequest.senha()));
 
                 // Atualiza outros campos que podem ter vindo vazios da Hotmart
-                usuario.setTelefone(cadastroRequest.telefone());
-                usuario.setTemEmpresa(cadastroRequest.temEmpresa());
-                usuario.setCnpj(cadastroRequest.cnpj());
+                usuario.setTelefone(usuarioRequest.telefone());
+                usuario.setTemEmpresa(usuarioRequest.temEmpresa());
+                usuario.setCnpj(usuarioRequest.cnpj());
 
-                Cadastro salvo = cadastroRepository.save(usuario);
+                Usuario salvo = usuarioRepository.save(usuario);
                 return mapearParaResponse(salvo);
             } else {
                 // Se já tem senha, o e-mail já está em uso por alguém que já completou o cadastro
@@ -48,33 +49,33 @@ public class CadastroService {
         }
 
         // 2. Se o usuário NÃO existe (Fluxo normal: se cadastrou no site antes de comprar)
-        boolean temEmpresa = cadastroRequest.temEmpresa() == 1;
+        boolean temEmpresa = usuarioRequest.temEmpresa() == 1;
 
-        Cadastro novoUsuario = Cadastro.builder()
-                .nomeCompleto(cadastroRequest.nomeCompleto())
-                .email(cadastroRequest.email())
-                .telefone(cadastroRequest.telefone())
-                .senha(passwordEncoder.encode(cadastroRequest.senha()))
-                .cpf(cadastroRequest.cpf())
+        Usuario novoUsuario = Usuario.builder()
+                .nomeCompleto(usuarioRequest.nomeCompleto())
+                .email(usuarioRequest.email())
+                .telefone(usuarioRequest.telefone())
+                .senha(passwordEncoder.encode(usuarioRequest.senha()))
+                .cpf(usuarioRequest.cpf())
                 .temEmpresa(temEmpresa ? 1 : 0)
-                .cnpj(cadastroRequest.cnpj())
+                .cnpj(usuarioRequest.cnpj())
                 .assinaturaAtiva(false) // No site ele começa sem acesso até o Webhook chegar
                 .build();
 
-        Cadastro salvo = cadastroRepository.save(novoUsuario);
+        Usuario salvo = usuarioRepository.save(novoUsuario);
 
         return mapearParaResponse(salvo);
     }
 
     // NOVO METODO: Adicione isso para a Controller conseguir consultar o banco
-    public Optional<Cadastro> buscarPorEmail(String email) {
-        return cadastroRepository.findByEmail(email);
+    public Optional<Usuario> buscarPorTelefone(String telefone) {
+        return usuarioRepository.findByTelefone(telefone);
     }
 
     // Metodo auxiliar para transformar a Entity em DTO (Response)
-    private CadastroResponse mapearParaResponse(Cadastro entity) {
-        return new CadastroResponse(
-                entity.getIdCadastro(),
+    private UsuarioResponse mapearParaResponse(Usuario entity) {
+        return new UsuarioResponse(
+                entity.getIdUsuario(),
                 entity.getNomeCompleto(),
                 entity.getEmail(),
                 entity.getTelefone(),
@@ -91,19 +92,19 @@ public class CadastroService {
 
         boolean isAprovado = "COMPLETED".equalsIgnoreCase(status) || "APPROVED".equalsIgnoreCase(status);
 
-        cadastroRepository.findByEmail(email).ifPresentOrElse(
+        usuarioRepository.findByTelefone(email).ifPresentOrElse(
                 existente -> {
                     // CENÁRIO: O CARA JÁ TINHA CADASTRO
                     // Apenas atualizamos o status da assinatura e a transação
                     existente.setAssinaturaAtiva(isAprovado);
                     existente.setHottTransaction(transaction);
-                    cadastroRepository.save(existente);
+                    usuarioRepository.save(existente);
                     System.out.println("Usuário já existia. Apenas ativamos o acesso!");
                 },
                 () -> {
                     // CENÁRIO: É UM CLIENTE NOVO
                     if (isAprovado) {
-                        Cadastro novo = Cadastro.builder()
+                        Usuario novo = Usuario.builder()
                                 .nomeCompleto(nome)
                                 .email(email)
                                 .telefone(telefone)
@@ -113,19 +114,39 @@ public class CadastroService {
                                 .temEmpresa(0)
                                 .senha(null) // SENHA VAZIA: Ele vai criar depois no site
                                 .build();
-                        cadastroRepository.save(novo);
+                        usuarioRepository.save(novo);
                         System.out.println("Novo usuário criado via Hotmart (sem senha).");
                     }
                 }
         );
     }
 
-    public void salvar(Cadastro cadastro) {
-        cadastroRepository.save(cadastro);
+    public void salvar(Usuario usuario) {
+        usuarioRepository.save(usuario);
     }
 
-    //lista todos os usuários para emilly
-    public List<Cadastro> listarTodos() {
-        return cadastroRepository.findAll();
+    //lista todos os usuários para emilly (pode ser que eu retire um dia isso aqui)
+    public List<Usuario> listarTodos() {
+        return usuarioRepository.findAll();
+    }
+
+    public void atualizarStatusAssinatura(String telefone, String statusHotmart) {
+        Usuario usuario = usuarioRepository.findByTelefone(telefone)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean isAprovado = "COMPLETED".equalsIgnoreCase(statusHotmart) || "APPROVED".equalsIgnoreCase(statusHotmart);
+
+        if (isAprovado) {
+            usuario.setAssinaturaAtiva(true);
+            usuario.setDataInatividade(null);//limpa a adata quando está em dia
+        } else {
+            usuario.setAssinaturaAtiva(false);
+
+            if (usuario.getDataInatividade() == null) {
+                usuario.setDataInatividade(LocalDateTime.now());
+            }
+        }
+
+        usuarioRepository.save(usuario);
     }
 }

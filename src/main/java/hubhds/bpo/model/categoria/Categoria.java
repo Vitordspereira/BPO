@@ -1,6 +1,6 @@
 package hubhds.bpo.model.categoria;
 
-import hubhds.bpo.model.cadastro.Cadastro;
+import hubhds.bpo.model.usuario.Usuario;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -36,6 +36,6 @@ public class Categoria {
     private String cor;
 
     @ManyToOne
-    @JoinColumn(name = "id_cadastro", nullable = false)
-    private Cadastro cadastro;
+    @JoinColumn(name = "id_usuario", nullable = false)
+    private Usuario usuario;
 }

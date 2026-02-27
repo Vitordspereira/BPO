@@ -1,6 +1,6 @@
 package hubhds.bpo.model.dashboard;
 
-import hubhds.bpo.model.cadastro.Cadastro;
+import hubhds.bpo.model.usuario.Usuario;
 import hubhds.bpo.model.cartao.Cartao;
 import hubhds.bpo.model.categoria.Categoria;
 import hubhds.bpo.model.categoria.Tipo;
@@ -45,14 +45,14 @@ public class Dashboard {
     private MeioPagamento meioPagamento;
 
     @ManyToOne
-    @JoinColumn(name = "id_cadastro", nullable = false)
-    private Cadastro cadastro;
+    @JoinColumn(name = "id_usuario", nullable = false)
+    private Usuario usuario;
 
     @ManyToOne
     @JoinColumn(name = "id_categoria", nullable = false)
     private Categoria categoria;
 
     @ManyToOne
-    @JoinColumn(name = "id_cartao", nullable = false)
+    @JoinColumn(name = "id_cartao")
     private Cartao cartao;
 }

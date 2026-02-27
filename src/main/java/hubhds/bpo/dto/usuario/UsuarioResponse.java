@@ -1,7 +1,7 @@
-package hubhds.bpo.dto.cadastro;
+package hubhds.bpo.dto.usuario;
 
-public record CadastroResponse(
-        Long idCadastro,
+public record UsuarioResponse(
+        Long idUsuario,
         String nomeCompleto,
         String email,
         String telefone,

@@ -19,29 +19,29 @@ public class CategoriaController {
     private CategoriaService categoriaService;
 
     @Valid
-    @PostMapping("/{idCadastro}")
-    public ResponseEntity<CategoriaResponse> criar(@PathVariable Long idCadastro, @RequestBody @Valid CategoriaRequest categoriaRequest) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(categoriaService.salvar(idCadastro, categoriaRequest));
+    @PostMapping("/{idUsuario}")
+    public ResponseEntity<CategoriaResponse> criar(@PathVariable Long idUsuario, @RequestBody @Valid CategoriaRequest categoriaRequest) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(categoriaService.salvar(idUsuario, categoriaRequest));
     }
 
-    @GetMapping("/listar/{idCadastro}")
-    public ResponseEntity<List<CategoriaResponse>> listarPorUsuario(@PathVariable Long idCadastro) {
-        List<CategoriaResponse> categorias = categoriaService.listarPorUsuario(idCadastro);
+    @GetMapping("/listar/{idUsuario}")
+    public ResponseEntity<List<CategoriaResponse>> listarPorUsuario(@PathVariable Long idUsuario) {
+        List<CategoriaResponse> categorias = categoriaService.listarPorUsuario(idUsuario);
         return ResponseEntity.ok(categorias);
     }
 
-    @PutMapping("/editar/{idCadastro}/{idCategoria}")
+    @PutMapping("/editar/{idUsuario}/{idCategoria}")
     public ResponseEntity<CategoriaResponse> atualizar(
-            @PathVariable Long idCadastro,
+            @PathVariable Long idUsuario,
             @PathVariable Long idCategoria,
             @RequestBody @Valid CategoriaRequest categoriaRequest
     ) {
-        return ResponseEntity.ok(categoriaService.atualizar(idCadastro, idCategoria, categoriaRequest));
+        return ResponseEntity.ok(categoriaService.atualizar(idUsuario, idCategoria, categoriaRequest));
     }
 
-    @DeleteMapping("/excluir/{idCadastro}/{idCategoria}")
-    public ResponseEntity<Void> excluir(@PathVariable Long idCadastro, @PathVariable Long idCategoria) {
-        categoriaService.deletar(idCadastro, idCategoria);
+    @DeleteMapping("/excluir/{idUsuario}/{idCategoria}")
+    public ResponseEntity<Void> excluir(@PathVariable Long idUsuario, @PathVariable Long idCategoria) {
+        categoriaService.deletar(idUsuario, idCategoria);
 
         return ResponseEntity.noContent().build();
     }

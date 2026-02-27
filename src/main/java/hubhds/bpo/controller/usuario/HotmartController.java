@@ -1,6 +1,6 @@
-package hubhds.bpo.controller.cadastro;
+package hubhds.bpo.controller.usuario;
 
-import hubhds.bpo.service.cadastro.CadastroService;
+import hubhds.bpo.service.usuario.UsuarioService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,10 +11,10 @@ import java.util.Map;
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class HotmartController {
 
-    private final CadastroService cadastroService;
+    private final UsuarioService usuarioService;
 
-    public HotmartController(CadastroService cadastroService) {
-        this.cadastroService = cadastroService;
+    public HotmartController(UsuarioService usuarioService) {
+        this.usuarioService = usuarioService;
     }
 
     @PostMapping("/hotmart")
@@ -33,7 +33,7 @@ public class HotmartController {
             String transaction = (String) purchase.get("transaction");
 
             // Envia para o Service processar a lógica do seu fluxograma
-            cadastroService.processarWebhookHotmart(email, status, transaction, nome, cpf, telefone);
+            usuarioService.processarWebhookHotmart(email, status, transaction, nome, cpf, telefone);
 
             return ResponseEntity.ok().build();
 

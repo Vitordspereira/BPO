@@ -13,6 +13,6 @@ public record CartaoDTO(
         Bandeira bandeira,
         Categoria categoria,
         BigDecimal limiteTotal,
-        Long idCadastro
+        Long idUsuario
 ) {
 }

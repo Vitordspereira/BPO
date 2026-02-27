@@ -2,24 +2,24 @@ package hubhds.bpo.service.login;
 
 import hubhds.bpo.dto.login.LoginRequest;
 import hubhds.bpo.dto.login.LoginResponse;
-import hubhds.bpo.model.cadastro.Cadastro;
-import hubhds.bpo.repository.cadastro.CadastroRepository;
+import hubhds.bpo.model.usuario.Usuario;
+import hubhds.bpo.repository.usuario.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class LoginService {
 
-    private final CadastroRepository cadastroRepository;
+    private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public LoginService(CadastroRepository cadastroRepository, PasswordEncoder passwordEncoder) {
-        this.cadastroRepository = cadastroRepository;
+    public LoginService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+        this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
     public LoginResponse login(LoginRequest req) {
-        Cadastro user = cadastroRepository.findByEmail(req.email())
+        Usuario user = usuarioRepository.findByTelefone(req.email())
                 .orElseThrow(() -> new RuntimeException("Email ou senha inválidos"));
 
         if (!passwordEncoder.matches(req.senha(), user.getSenha())) {
@@ -27,7 +27,7 @@ public class LoginService {
         }
 
         return new LoginResponse(
-                user.getIdCadastro(),
+                user.getIdUsuario(),
                 user.getNomeCompleto(),
                 user.getEmail(),
                 user.getTemEmpresa(),

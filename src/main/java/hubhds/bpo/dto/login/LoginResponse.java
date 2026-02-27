@@ -1,7 +1,7 @@
 package hubhds.bpo.dto.login;
 
 public record LoginResponse(
-        Long idCadastro,
+        Long idUsuario,
         String nomeCompleto,
         String email,
         Integer temEmpresa,

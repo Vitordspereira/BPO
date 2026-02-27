@@ -3,12 +3,12 @@ package hubhds.bpo.service.dashboard;
 import hubhds.bpo.dto.dashboard.DashboardRequest;
 import hubhds.bpo.dto.dashboard.DashboardResponse;
 import hubhds.bpo.dto.dashboard.resumo.DashboardResumoDTO;
-import hubhds.bpo.model.cadastro.Cadastro;
+import hubhds.bpo.model.usuario.Usuario;
 import hubhds.bpo.model.cartao.Cartao;
 import hubhds.bpo.model.categoria.Categoria;
 import hubhds.bpo.model.dashboard.Dashboard;
 import hubhds.bpo.model.dashboard.MeioPagamento;
-import hubhds.bpo.repository.cadastro.CadastroRepository;
+import hubhds.bpo.repository.usuario.UsuarioRepository;
 import hubhds.bpo.repository.cartao.CartaoRepository;
 import hubhds.bpo.repository.categoria.CategoriaRepository;
 import hubhds.bpo.repository.dashboard.DashboardRepository;
@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -25,7 +26,7 @@ public class DashboardService {
     private DashboardRepository dashboardRepository;
 
     @Autowired
-    private CadastroRepository cadastroRepository;
+    private UsuarioRepository usuarioRepository;
 
     @Autowired
     private CategoriaRepository categoriaRepository;
@@ -33,15 +34,19 @@ public class DashboardService {
     @Autowired
     private CartaoRepository cartaoRepository;
 
-    public DashboardResponse salvar(Long idCadastro, DashboardRequest dashboardRequest){
-        Cadastro cadastro = cadastroRepository.findById(idCadastro)
+    public DashboardResponse salvar(Long idUsuario, DashboardRequest dashboardRequest) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        // --- NOVA TRAVA DE SEGURANÇA PARA A EMILLY ---
+        validarAcessoUsuario(usuario);
+        // ---------------------------------------------
 
         Categoria categoria = categoriaRepository.findById(dashboardRequest.idCategoria())
                 .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
 
         Dashboard dashboard = new Dashboard();
-        dashboard.setCadastro(cadastro);
+        dashboard.setUsuario(usuario);
         dashboard.setCategoria(categoria);
         dashboard.setDescricao(dashboardRequest.descricao());
         dashboard.setValor(dashboardRequest.valor());
@@ -49,55 +54,66 @@ public class DashboardService {
         dashboard.setTipo(dashboardRequest.tipo());
         dashboard.setMeioPagamento(dashboardRequest.meioPagamento());
 
-        // 4. Lógica para Cartão (Crédito ou Débito)
         if (isMeioPagamentoCartao(dashboardRequest.meioPagamento()) && dashboardRequest.idCartao() != null) {
             Cartao cartao = cartaoRepository.findById(dashboardRequest.idCartao())
                     .orElseThrow(() -> new RuntimeException("Cartão não encontrado"));
 
-            // Validação de segurança: O cartão pertence ao usuário do idCadastro?
-            if (!cartao.getCadastro().getIdCadastro().equals(idCadastro)) {
+            if (!cartao.getUsuario().getIdUsuario().equals(idUsuario)) {
                 throw new RuntimeException("Este cartão não pertence a este usuário!");
             }
-
             dashboard.setCartao(cartao);
         }
 
-        // 5. Salvamos e retornamos o Response formatado
         dashboardRepository.save(dashboard);
         return new DashboardResponse(dashboard);
     }
 
-    // Mwtodo auxiliar para deixar o código mais limpo
-    private boolean isMeioPagamentoCartao(MeioPagamento meio) {
-        return meio == MeioPagamento.CARTAO_CREDITO || meio == MeioPagamento.CARTAO_DEBITO;
+
+     //Metodo privado para validar se o usuário pode realizar lançamentos
+     //Regra: Ativo ou Inativo há menos de 30 dias.
+    private void validarAcessoUsuario(Usuario usuario){
+        if (!usuario.getAssinaturaAtiva()) {
+            if (usuario.getDataInatividade() != null) {
+                long diasInativo = ChronoUnit.DAYS.between(
+                        usuario.getDataInatividade(),
+                        java.time.LocalDateTime.now()
+                );
+
+                if (diasInativo > 30) {
+                    throw new RuntimeException("Acesso negado: Assinatura suspensa a mais de 30 dias.");
+                } else {
+                    //Se não tem assinatura ativa e nem data de inatividade, bloqueia
+                    throw new RuntimeException("Acesso negado: Regularize a sua assinatura.");
+                }
+            }
+        }
     }
 
-    public List<Object[]> buscarDadosGraficoPizza(Long idCadastro) {
-        return dashboardRepository.somarDespesasPorCategoria(idCadastro);
+    private boolean isMeioPagamentoCartao(MeioPagamento meioPagamento) {
+        return meioPagamento == MeioPagamento.CARTAO_CREDITO || meioPagamento == MeioPagamento.CARTAO_DEBITO;
     }
 
-    public List<Object[]> buscarTotaisCards(Long idCadastro) {
-        return dashboardRepository.buscarResumoFinanceiro(idCadastro);
+    public List<Object[]> buscarDadosGraficoPizza(Long idUsuario) {
+        return dashboardRepository.somarDespesasPorCategoria(idUsuario);
     }
 
-    //Busca lançamento do usuario
+    public List<Object[]> buscarTotaisCards(Long idUsuario) {
+        return dashboardRepository.buscarResumoFinanceiro(idUsuario);
+    }
 
-    public DashboardResumoDTO buscarResumo(Long idcadastro) {
-        List<Dashboard> lancamento = dashboardRepository.findByCadastroIdCadastro(idcadastro);
+    public DashboardResumoDTO buscarResumo(Long idUsuario) {
+        List<Dashboard> lancamento = dashboardRepository.findByUsuarioIdUsuario(idUsuario);
 
-        //Soma as entradas (receita)
         BigDecimal entradas = lancamento.stream()
                 .filter(d -> d.getTipo().name().equals("RECEITA"))
                 .map(Dashboard::getValor)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        //Soma as saídas (despesa)
         BigDecimal saidas = lancamento.stream()
                 .filter(d -> d.getTipo().name().equals("DESPESA"))
                 .map(Dashboard::getValor)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        //Calcula o saldo
         BigDecimal saldoFinal = entradas.subtract(saidas);
 
         return new DashboardResumoDTO(entradas, saidas, saldoFinal, lancamento);

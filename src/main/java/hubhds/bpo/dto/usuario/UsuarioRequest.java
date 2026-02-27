@@ -1,8 +1,8 @@
-package hubhds.bpo.dto.cadastro;
+package hubhds.bpo.dto.usuario;
 
 import jakarta.validation.constraints.*;
 
-public record CadastroRequest(
+public record UsuarioRequest(
 
         @NotBlank(message = "Nome é obrigatório.")
         @Size(max = 150)

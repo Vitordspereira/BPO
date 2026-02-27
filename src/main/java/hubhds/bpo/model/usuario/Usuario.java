@@ -1,4 +1,4 @@
-package hubhds.bpo.model.cadastro;
+package hubhds.bpo.model.usuario;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(
-        name = "cadastro",
+        name = "usuario",
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_usuario_email", columnNames = "email"),
                 @UniqueConstraint(name = "uk_usuario_cpf", columnNames = "cpf"),
@@ -21,12 +21,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Cadastro {
+public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_cadastro", nullable = false)
-    private Long idCadastro;
+    @Column(name = "id_usuario", nullable = false)
+    private Long idUsuario;
 
     @Column(name = "nome_completo", nullable = false, length = 150)
     private String nomeCompleto;
@@ -52,17 +52,12 @@ public class Cadastro {
     @Column(name = "assinatura_ativa")
     private Boolean assinaturaAtiva;
 
+    //adicionar no banco
+    @Column(name = "data_inatividade")
+    private LocalDateTime dataInatividade;
+
     @Column(name = "hott_transaction", length = 50)
     private String hottTransaction;
-
-    // NOVOS CAMPOS PARA O FLUXO DA EMILLY
-    @Column(name = "primeiro_acesso", nullable = false)
-    @Builder.Default
-    private Boolean primeiroAcesso = true;
-
-    @Column(name = "onboarding_concluido", nullable = false)
-    @Builder.Default
-    private Boolean onboardingConcluido = false;
 
     @CreationTimestamp
     @Column(name = "criado_em", insertable = false, updatable = false)

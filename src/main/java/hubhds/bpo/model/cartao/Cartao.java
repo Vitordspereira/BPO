@@ -1,6 +1,6 @@
 package hubhds.bpo.model.cartao;
 
-import hubhds.bpo.model.cadastro.Cadastro;
+import hubhds.bpo.model.usuario.Usuario;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -38,8 +38,8 @@ public class Cartao {
     private BigDecimal limiteTotal;
 
     @ManyToOne
-    @JoinColumn(name = "id_cadastro", nullable = false)
-    private Cadastro cadastro;
+    @JoinColumn(name = "id_usuario", nullable = false)
+    private Usuario usuario;
 
     private BigDecimal saldoEntrada = BigDecimal.ZERO;
     private BigDecimal saldoSaida = BigDecimal.ZERO;

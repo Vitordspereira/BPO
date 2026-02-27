@@ -1,10 +1,10 @@
 package hubhds.bpo.service.cartao;
 
 import hubhds.bpo.dto.cartao.CartaoDTO;
-import hubhds.bpo.model.cadastro.Cadastro;
+import hubhds.bpo.model.usuario.Usuario;
 import hubhds.bpo.model.cartao.Cartao;
 
-import hubhds.bpo.repository.cadastro.CadastroRepository;
+import hubhds.bpo.repository.usuario.UsuarioRepository;
 import hubhds.bpo.repository.cartao.CartaoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,7 @@ public class CartaoService {
     private CartaoRepository cartaoRepository;
 
     @Autowired
-    private CadastroRepository cadastroRepository;
+    private UsuarioRepository usuarioRepository;
 
     //aplicação de máscara 0000.0000.0000
     private String formatarNumeroCartao(String numero){
@@ -31,8 +31,8 @@ public class CartaoService {
 
     public Cartao criarCartao (CartaoDTO cartaoDTO) {
 
-        Cadastro cadastro = cadastroRepository.findById(cartaoDTO.idCadastro())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + cartaoDTO.idCadastro()));
+        Usuario usuario = usuarioRepository.findById(cartaoDTO.idUsuario())
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + cartaoDTO.idUsuario()));
 
         Cartao cartao = new Cartao();
         cartao.setNomeCartao(cartaoDTO.nomeCartao());
@@ -54,7 +54,7 @@ public class CartaoService {
         cartao.setSaldoEntrada(BigDecimal.ZERO);
         cartao.setSaldoSaida(BigDecimal.ZERO);
 
-        cartao.setCadastro(cadastro);
+        cartao.setUsuario(usuario);
         return cartaoRepository.save(cartao);
     }
 
