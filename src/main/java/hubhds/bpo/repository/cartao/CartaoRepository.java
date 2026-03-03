@@ -9,5 +9,4 @@ import java.util.Optional;
 @Repository
 public interface CartaoRepository extends JpaRepository<Cartao, Long> {
 
-    Optional<Cartao> findByNomeCartao(String nomeCartao);
 }

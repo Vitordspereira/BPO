@@ -26,6 +26,12 @@ public class CartaoController {
         return ResponseEntity.ok(cartaoAtualizado);
     }
 
+    @PatchMapping("/alternar-status/{idCartao}")
+    public ResponseEntity<Void> alternarStatusCartao(@PathVariable Long idCartao) {
+        cartaoService.alternarStatusCartao(idCartao);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/excluir/{idCartao}")
     public ResponseEntity<Cartao> excluir(@PathVariable Long idCartao) {
         cartaoService.excluirCartao(idCartao);

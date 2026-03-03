@@ -1,5 +1,70 @@
---habilitar cors para o Caique, colocar cors em uma classe unica inves de ficar nas controllers
+-- informações de login
 
--- Criar um handler de erros
+{
+    "email": "vitor@teste.com",
+    "senha": "Senha@987"
+}
 
--- após 30 dias sem uso colocar como usuario inativo, colocar regra
+//métodos
+
+POST - /login
+
+-- informações de cartão
+
+{
+  "nomeCartao": "Meu Cartão Inter",
+  "numeroMascara": "1234.5678.9012.3456",
+  "diaFechamento": 10,
+  "diaVencimento": 17,
+  "bandeira": "MASTERCARD",
+  "categoria": "BLACK",
+  "limiteTotal": 15000.00,
+  "idCadastro": 1
+}
+
+Bandeira {
+    VISA,
+    MASTERCARD,
+    ELO,
+    AMEX,
+    HIPERCARD,
+    OUTRA
+}
+
+Categoria {
+    CLASSIC,
+    GOLD,
+    PLATINUM,
+    BLACK,
+    INFINITE
+}
+
+// métodos
+
+POST - /cartao/cadastrar
+PUT - /cartao/atualizar/{idUsuario}
+PATCH - /cartao/altenar-status/{idCartao}
+DEL - /cartao/excluir/{idUsuario}
+
+-- informações de categoria
+
+{
+    "nome": "Oficina mecânica",
+    "tipo": "DESPESA",
+    "icone": null,
+    "cor": null
+}
+
+tipo {
+ RECEITA,
+ DESPESA
+}
+
+//métodos
+
+POST - /categoria/{idUsuario}
+GET - /categoria/listar/{idUsuario}
+PUT - /categoria/editar/{idUsuario}/{idCategoria}
+DEL - /categoria/excluir/{idUsuario}/{idCategoria}
+
+

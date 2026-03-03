@@ -92,7 +92,7 @@ public class UsuarioService {
 
         boolean isAprovado = "COMPLETED".equalsIgnoreCase(status) || "APPROVED".equalsIgnoreCase(status);
 
-        usuarioRepository.findByTelefone(email).ifPresentOrElse(
+        usuarioRepository.findByTelefone(telefone).ifPresentOrElse(
                 existente -> {
                     // CENÁRIO: O CARA JÁ TINHA CADASTRO
                     // Apenas atualizamos o status da assinatura e a transação

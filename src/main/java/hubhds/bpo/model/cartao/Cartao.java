@@ -34,6 +34,10 @@ public class Cartao {
     @Enumerated(EnumType.STRING)
     private Categoria categoria;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name ="status_cartao")
+    private StatusCartao statusCartao = StatusCartao.ATIVO;
+
     @Column(precision = 10, scale = 2)
     private BigDecimal limiteTotal;
 

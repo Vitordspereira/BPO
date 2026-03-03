@@ -8,7 +8,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/webhooks")// URL que você vai colocar na Hotmart
-@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class HotmartController {
 
     private final UsuarioService usuarioService;

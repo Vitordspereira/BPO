@@ -1,11 +1,13 @@
 package hubhds.bpo.service.cartao;
 
 import hubhds.bpo.dto.cartao.CartaoDTO;
+import hubhds.bpo.model.cartao.StatusCartao;
 import hubhds.bpo.model.usuario.Usuario;
 import hubhds.bpo.model.cartao.Cartao;
 
 import hubhds.bpo.repository.usuario.UsuarioRepository;
 import hubhds.bpo.repository.cartao.CartaoRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +31,7 @@ public class CartaoService {
         return apenasNumeros.replaceAll("(\\d{4})(?=\\d)", "$1.");
     }
 
+    @Transactional
     public Cartao criarCartao (CartaoDTO cartaoDTO) {
 
         Usuario usuario = usuarioRepository.findById(cartaoDTO.idUsuario())
@@ -40,17 +43,14 @@ public class CartaoService {
         //aplicação de máscara
         cartao.setNumeroMascara(formatarNumeroCartao(cartaoDTO.numeroMascara()));
 
+
+        cartao.setStatusCartao(cartaoDTO.statusCartao() !=null ? cartaoDTO.statusCartao() : StatusCartao.ATIVO);
+
         cartao.setDiaFechamento(cartaoDTO.diaFechamento());
         cartao.setDiaVencimento(cartaoDTO.diaVencimento());
         cartao.setLimiteTotal(cartaoDTO.limiteTotal());
-
-        try {
-            cartao.setBandeira(cartaoDTO.bandeira());
-            cartao.setCategoria(cartaoDTO.categoria());
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Bandeira ou Categoria inválida");
-        }
-
+        cartao.setBandeira(cartaoDTO.bandeira());
+        cartao.setCategoria(cartaoDTO.categoria());
         cartao.setSaldoEntrada(BigDecimal.ZERO);
         cartao.setSaldoSaida(BigDecimal.ZERO);
 
@@ -73,6 +73,10 @@ public class CartaoService {
         cartaoExistente.setDiaVencimento(cartaoDTO.diaVencimento());
         cartaoExistente.setLimiteTotal(cartaoDTO.limiteTotal());
 
+        if (cartaoDTO.statusCartao() != null) cartaoExistente.setStatusCartao(cartaoDTO.statusCartao());
+        if (cartaoDTO.bandeira() != null) cartaoExistente.setBandeira(cartaoDTO.bandeira());
+        if (cartaoDTO.categoria() != null) cartaoExistente.setCategoria(cartaoDTO.categoria());
+
         return cartaoRepository.save(cartaoExistente);
     }
 
@@ -83,5 +87,14 @@ public class CartaoService {
         }
 
         cartaoRepository.deleteById(idCartao);
+    }
+
+    @Transactional
+    public void alternarStatusCartao(Long idCartao){
+        Cartao cartao = cartaoRepository.findById(idCartao)
+                .orElseThrow(() -> new RuntimeException("Cartão não bloqueado"));
+
+        cartao.setStatusCartao(cartao.getStatusCartao() == StatusCartao.ATIVO ? StatusCartao.BLOQUEADO : StatusCartao.ATIVO);
+        cartaoRepository.save(cartao);
     }
 }

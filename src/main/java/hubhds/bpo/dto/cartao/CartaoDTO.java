@@ -2,6 +2,7 @@ package hubhds.bpo.dto.cartao;
 
 import hubhds.bpo.model.cartao.Bandeira;
 import hubhds.bpo.model.cartao.Categoria;
+import hubhds.bpo.model.cartao.StatusCartao;
 
 import java.math.BigDecimal;
 
@@ -13,6 +14,7 @@ public record CartaoDTO(
         Bandeira bandeira,
         Categoria categoria,
         BigDecimal limiteTotal,
+        StatusCartao statusCartao,
         Long idUsuario
 ) {
 }
