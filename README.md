@@ -1,4 +1,4 @@
-# BPO - Sistema financeiro de usuário
+# BPO - Sistema financeiro
 
 ## 📌 Sobre o Projeto
 Projeto BPO, desenvolvimento de um assistente financeiro com foco no controle automatizado de lucros e gastos. Permitindo que clientes gerenciem cartões monitorem limites e acompanhem transações de forma mais fácil e inteligente.
