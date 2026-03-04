@@ -7,12 +7,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/cartao")
 public class CartaoController {
 
     @Autowired
     private CartaoService cartaoService;
+
+    @GetMapping("/listar/{idUsuario}")
+    public ResponseEntity<List<Cartao>> listarPorCartao(@PathVariable Long idUsuario){
+        List<Cartao> cartoes = cartaoService.listarPorCartao(idUsuario);
+        return ResponseEntity.ok(cartoes);
+    }
 
     @PostMapping("/cadastrar")
     public ResponseEntity<Cartao> cadastrar(@RequestBody CartaoDTO cartaoDTO) {

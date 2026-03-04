@@ -12,6 +12,7 @@ import hubhds.bpo.repository.usuario.UsuarioRepository;
 import hubhds.bpo.repository.cartao.CartaoRepository;
 import hubhds.bpo.repository.categoria.CategoriaRepository;
 import hubhds.bpo.repository.dashboard.DashboardRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +35,7 @@ public class DashboardService {
     @Autowired
     private CartaoRepository cartaoRepository;
 
+    @Transactional
     public DashboardResponse salvar(Long idUsuario, DashboardRequest dashboardRequest) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
@@ -67,7 +69,6 @@ public class DashboardService {
         dashboardRepository.save(dashboard);
         return new DashboardResponse(dashboard);
     }
-
 
      //Metodo privado para validar se o usuário pode realizar lançamentos
      //Regra: Ativo ou Inativo há menos de 30 dias.

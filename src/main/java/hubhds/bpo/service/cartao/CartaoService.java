@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 public class CartaoService {
@@ -56,6 +57,10 @@ public class CartaoService {
 
         cartao.setUsuario(usuario);
         return cartaoRepository.save(cartao);
+    }
+
+    public List<Cartao> listarPorCartao(Long idUsuario) {
+        return cartaoRepository.findByUsuario_IdUsuario(idUsuario);
     }
 
     public Cartao atualizarCartao(Long idCartao, CartaoDTO cartaoDTO){

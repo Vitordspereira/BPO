@@ -1,3 +1,8 @@
+por enquato manter receitas e despesas sobre webhook,
+vou ver ainda se é melhor deixar as transações como neutra né String ou com foco apenas no webhook,
+dependendo acredito que seja fácil de alterar.
+
+
 -- informações de login
 
 {
@@ -42,9 +47,9 @@ Categoria {
 // métodos
 
 POST - /cartao/cadastrar
-PUT - /cartao/atualizar/{idUsuario}
+PUT - /cartao/atualizar/{idCartao}
 PATCH - /cartao/altenar-status/{idCartao}
-DEL - /cartao/excluir/{idUsuario}
+DEL - /cartao/excluir/{idCartao}
 
 -- informações de categoria
 
@@ -66,5 +71,6 @@ POST - /categoria/{idUsuario}
 GET - /categoria/listar/{idUsuario}
 PUT - /categoria/editar/{idUsuario}/{idCategoria}
 DEL - /categoria/excluir/{idUsuario}/{idCategoria}
+
 
 
