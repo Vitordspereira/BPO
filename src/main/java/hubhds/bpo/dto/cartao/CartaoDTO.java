@@ -15,6 +15,8 @@ public record CartaoDTO(
         Categoria categoria,
         BigDecimal limiteTotal,
         StatusCartao statusCartao,
-        Long idUsuario
+        Long idUsuario,
+        String icone,
+        String cor
 ) {
 }

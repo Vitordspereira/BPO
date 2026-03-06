@@ -2,7 +2,10 @@ package hubhds.bpo.controller.dashboard;
 
 import hubhds.bpo.dto.dashboard.DashboardRequest;
 import hubhds.bpo.dto.dashboard.DashboardResponse;
+import hubhds.bpo.dto.dashboard.hotmart.HotmartWebhookDTO;
 import hubhds.bpo.dto.dashboard.resumo.DashboardResumoDTO;
+import hubhds.bpo.model.categoria.Tipo;
+import hubhds.bpo.model.dashboard.MeioPagamento;
 import hubhds.bpo.service.dashboard.DashboardService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +13,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+
 
 @RestController
 @RequestMapping("/dashboard")
@@ -64,5 +70,29 @@ public class DashboardController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("erro", e.getMessage()));
         }
+    }
+
+    //Essa controller consta na pasta webhook que está dentro de dashboard
+    @PostMapping("/webhook/hotmart/{idUsuario}")
+    public ResponseEntity<Void> receberVendaHotmart(
+            @PathVariable Long idUsuario,
+            @RequestBody HotmartWebhookDTO hotmartWebhookDTO){
+
+        //Conta matemática
+        BigDecimal valorLiquido = hotmartWebhookDTO.hotmartData().purchase().full_price_value()
+                .subtract(hotmartWebhookDTO.hotmartData().purchase().comission_value());
+
+    DashboardRequest dashboardRequest = new DashboardRequest(
+            "Venda Hotmart: " + hotmartWebhookDTO.hotmartData().product().name(),
+            valorLiquido,
+            LocalDate.now(),
+            Tipo.RECEITA,
+            MeioPagamento.HOTMART,
+            1L,
+            null
+    );
+
+    dashboardService.salvar(idUsuario, dashboardRequest);
+    return ResponseEntity.ok().build();
     }
 }

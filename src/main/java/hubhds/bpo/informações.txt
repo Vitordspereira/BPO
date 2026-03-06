@@ -1,6 +1,3 @@
-por enquato manter receitas e despesas sobre webhook,
-vou ver ainda se é melhor deixar as transações como neutra né String ou com foco apenas no webhook,
-dependendo acredito que seja fácil de alterar.
 
 
 -- informações de login

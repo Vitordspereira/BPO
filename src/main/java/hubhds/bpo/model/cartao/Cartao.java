@@ -41,6 +41,12 @@ public class Cartao {
     @Column(precision = 10, scale = 2)
     private BigDecimal limiteTotal;
 
+    @Column(name = "icone", length = 50)
+    private String icone;
+
+    @Column(name = "cor", length = 20)
+    private String cor;
+
     @ManyToOne
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;

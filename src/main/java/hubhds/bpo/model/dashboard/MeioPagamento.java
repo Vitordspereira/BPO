@@ -5,5 +5,6 @@ public enum MeioPagamento {
     BOLETO,
     CARTAO_CREDITO,
     CARTAO_DEBITO,
-    TRANSFERENCIA
+    TRANSFERENCIA,
+    HOTMART
 }

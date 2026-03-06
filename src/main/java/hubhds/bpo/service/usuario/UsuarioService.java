@@ -2,6 +2,7 @@ package hubhds.bpo.service.usuario;
 
 import hubhds.bpo.dto.usuario.UsuarioRequest;
 import hubhds.bpo.dto.usuario.UsuarioResponse;
+import hubhds.bpo.dto.usuario.perfil.PerfilDTO;
 import hubhds.bpo.model.usuario.Usuario;
 import hubhds.bpo.repository.usuario.UsuarioRepository;
 import jakarta.transaction.Transactional;
@@ -146,6 +147,16 @@ public class UsuarioService {
                 usuario.setDataInatividade(LocalDateTime.now());
             }
         }
+
+
+        usuarioRepository.save(usuario);
+    }
+
+    public void atualizarPerfil(Long idUsuario, PerfilDTO perfilDTO) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        usuario.setNomeCompleto(perfilDTO.nomeCompleto());
+        usuario.setEmail(perfilDTO.email());
 
         usuarioRepository.save(usuario);
     }
