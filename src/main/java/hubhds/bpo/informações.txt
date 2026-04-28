@@ -90,4 +90,8 @@ PUT - /categoria/editar/{idUsuario}/{categoriaRef} : https://unintoxicating-char
 
 DEL - /categoria/excluir/{idUsuario}/{idCategoria} : https://unintoxicating-charmain-unfraudulently.ngrok-free.dev/categoria/excluir/1/19
 
+POST - /conta/esqueci-senha
+
+POST - /conta/redefinir-senha
+
 

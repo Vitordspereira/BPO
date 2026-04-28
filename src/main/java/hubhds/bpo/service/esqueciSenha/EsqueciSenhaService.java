@@ -3,11 +3,14 @@ package hubhds.bpo.service.esqueciSenha;
 import hubhds.bpo.model.esqueciSenha.EsqueciSenha;
 import hubhds.bpo.repository.esqueciSenha.EsqueciSenhaRepository;
 import hubhds.bpo.repository.usuario.UsuarioRepository;
+import hubhds.bpo.service.email.EmailService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+
 
 @Service
 public class EsqueciSenhaService {
@@ -15,20 +18,26 @@ public class EsqueciSenhaService {
     private final EsqueciSenhaRepository esqueciSenhaRepository;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+
+    @Value("${app.front-url}")
+    private String frontUrl;
 
     public EsqueciSenhaService(
             EsqueciSenhaRepository esqueciSenhaRepository,
             UsuarioRepository usuarioRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            EmailService emailService
     ) {
         this.esqueciSenhaRepository = esqueciSenhaRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     public String solicitarRecuperacao(String email) {
         if (email == null || email.isBlank()) {
-            throw  new RuntimeException("E-mail é obrigatório");
+            throw new RuntimeException("E-mail é obrigatório");
         }
 
         String emailTratado = email.trim().toLowerCase();
@@ -51,9 +60,11 @@ public class EsqueciSenhaService {
 
         esqueciSenhaRepository.save(esqueciSenha);
 
-        String link = "http://localhost:3000/redefinir-senha?token=" + token;
+        String link = frontUrl + "?token=" + token;
 
-        return link;
+        emailService.enviarRedefinicaoSenha(emailTratado, link);
+
+        return "Iremos enviar o link pelo e-mail informado";
     }
 
     public void redefinirSenha(String token, String novaSenha) {
@@ -85,6 +96,7 @@ public class EsqueciSenhaService {
 
         usuario.setSenha(passwordEncoder.encode(novaSenha));
         usuarioRepository.save(usuario);
+
         esqueciSenha.setUsado(true);
         esqueciSenhaRepository.save(esqueciSenha);
     }
