@@ -1,17 +1,20 @@
 package hubhds.bpo.service.usuario;
 
+import hubhds.bpo.dto.usuario.UsuarioCompletaCadastro;
 import hubhds.bpo.dto.usuario.UsuarioRequest;
 import hubhds.bpo.dto.usuario.UsuarioResponse;
+import hubhds.bpo.dto.usuario.perfil.AmbientesDTO;
 import hubhds.bpo.dto.usuario.perfil.PerfilDTO;
+import hubhds.bpo.model.usuario.AmbienteUsuario;
 import hubhds.bpo.model.usuario.Usuario;
 import hubhds.bpo.repository.usuario.UsuarioRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import hubhds.bpo.dto.usuario.perfil.AlterarAmbienteDTO;
 
 @Service
 public class UsuarioService {
@@ -25,138 +28,159 @@ public class UsuarioService {
     }
 
     @Transactional
-    public UsuarioResponse usuarioResponse(UsuarioRequest usuarioRequest) {
-        // 1. Verifica se o e-mail já existe no banco (Pode ter sido criado pela Hotmart)
-        Optional<Usuario> usuarioExistente = usuarioRepository.findByTelefone(usuarioRequest.email());
+    public UsuarioResponse cadastroManual(UsuarioRequest usuarioRequest) {
+        Optional<Usuario> usuarioExistente = usuarioRepository.findByTelefone(usuarioRequest.telefone());
 
         if (usuarioExistente.isPresent()) {
             Usuario usuario = usuarioExistente.get();
 
-            // Se a senha for nula, significa que ele comprou na Hotmart e está criando a senha AGORA
-            if (usuario.getSenha() == null) {
+            // Se já existe usuário por telefone e ainda não tem senha,
+            // significa que ele veio de fluxo externo e está finalizando cadastro agora
+            if (usuario.getSenha() == null || usuario.getSenha().isBlank()) {
+                usuario.setNomeCompleto(usuarioRequest.nomeCompleto());
+                usuario.setEmail(usuarioRequest.email());
+                usuario.setTelefone(usuarioRequest.telefone());
                 usuario.setSenha(passwordEncoder.encode(usuarioRequest.senha()));
 
-                // Atualiza outros campos que podem ter vindo vazios da Hotmart
-                usuario.setTelefone(usuarioRequest.telefone());
-                usuario.setTemEmpresa(usuarioRequest.temEmpresa());
-                usuario.setCnpj(usuarioRequest.cnpj());
+                if (usuario.getTemEmpresa() == null) {
+                    usuario.setTemEmpresa(0);
+                }
+
+                if (usuario.getAmbienteUsuario() == null) {
+                    usuario.setAmbienteUsuario(AmbienteUsuario.PESSOAL);
+                }
 
                 Usuario salvo = usuarioRepository.save(usuario);
                 return mapearParaResponse(salvo);
             } else {
-                // Se já tem senha, o e-mail já está em uso por alguém que já completou o cadastro
-                throw new RuntimeException("Este e-mail já possui uma conta cadastrada.");
+                throw new RuntimeException("Este telefone já possui uma conta cadastrada.");
             }
         }
-
-        // 2. Se o usuário NÃO existe (Fluxo normal: se cadastrou no site antes de comprar)
-        boolean temEmpresa = usuarioRequest.temEmpresa() == 1;
 
         Usuario novoUsuario = Usuario.builder()
                 .nomeCompleto(usuarioRequest.nomeCompleto())
                 .email(usuarioRequest.email())
                 .telefone(usuarioRequest.telefone())
                 .senha(passwordEncoder.encode(usuarioRequest.senha()))
-                .cpf(usuarioRequest.cpf())
-                .temEmpresa(temEmpresa ? 1 : 0)
-                .cnpj(usuarioRequest.cnpj())
-                .assinaturaAtiva(false) // No site ele começa sem acesso até o Webhook chegar
+                .temEmpresa(0)
+                .assinaturaAtiva(false)
+                .ambienteUsuario(AmbienteUsuario.PESSOAL)
                 .build();
 
         Usuario salvo = usuarioRepository.save(novoUsuario);
-
         return mapearParaResponse(salvo);
     }
 
-    // NOVO METODO: Adicione isso para a Controller conseguir consultar o banco
+    @Transactional
+    public UsuarioResponse completarCadastroPosPagamento(UsuarioCompletaCadastro usuarioCompletaCadastro) {
+        Usuario usuario = usuarioRepository.findByTelefone(usuarioCompletaCadastro.telefone())
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado para esse telefone."));
+
+        boolean assinaturaValida = Boolean.TRUE.equals(usuario.getAssinaturaAtiva())
+                || "authorized".equalsIgnoreCase(usuario.getMpStatus());
+
+        if (!assinaturaValida) {
+            throw new RuntimeException("Cadastro não permitido: assinatura ainda não está ativa.");
+        }
+
+        if (usuario.getSenha() != null && !usuario.getSenha().isBlank()) {
+            throw new RuntimeException("Este usuário já concluiu o cadastro.");
+        }
+
+        usuario.setNomeCompleto(usuarioCompletaCadastro.nomeCompleto().trim());
+        usuario.setEmail(usuarioCompletaCadastro.email().trim().toLowerCase());
+        usuario.setTelefone(usuarioCompletaCadastro.telefone().trim());
+        usuario.setSenha(passwordEncoder.encode(usuarioCompletaCadastro.senha()));
+
+        if (usuario.getTemEmpresa() == null) {
+            usuario.setTemEmpresa(0);
+        }
+
+        if (usuario.getAmbienteUsuario() == null) {
+            usuario.setAmbienteUsuario(AmbienteUsuario.PESSOAL);
+        }
+
+        Usuario salvo = usuarioRepository.save(usuario);
+        return mapearParaResponse(salvo);
+    }
+
     public Optional<Usuario> buscarPorTelefone(String telefone) {
         return usuarioRepository.findByTelefone(telefone);
     }
 
-    // Metodo auxiliar para transformar a Entity em DTO (Response)
     private UsuarioResponse mapearParaResponse(Usuario entity) {
         return new UsuarioResponse(
                 entity.getIdUsuario(),
                 entity.getNomeCompleto(),
                 entity.getEmail(),
                 entity.getTelefone(),
-                entity.getCpf(),
-                entity.getTemEmpresa(),
-                entity.getCnpj(),
-                entity.getAssinaturaAtiva() // Adicionei esse campo no seu Response!
+                entity.getAssinaturaAtiva()
         );
     }
 
-    // 2. NOVO METODO PARA A HOTMART (Lógica do Fluxograma)
-    @Transactional
-    public void processarWebhookHotmart(String email, String status, String transaction, String nome, String cpf, String telefone) {
-
-        boolean isAprovado = "COMPLETED".equalsIgnoreCase(status) || "APPROVED".equalsIgnoreCase(status);
-
-        usuarioRepository.findByTelefone(telefone).ifPresentOrElse(
-                existente -> {
-                    // CENÁRIO: O CARA JÁ TINHA CADASTRO
-                    // Apenas atualizamos o status da assinatura e a transação
-                    existente.setAssinaturaAtiva(isAprovado);
-                    existente.setHottTransaction(transaction);
-                    usuarioRepository.save(existente);
-                    System.out.println("Usuário já existia. Apenas ativamos o acesso!");
-                },
-                () -> {
-                    // CENÁRIO: É UM CLIENTE NOVO
-                    if (isAprovado) {
-                        Usuario novo = Usuario.builder()
-                                .nomeCompleto(nome)
-                                .email(email)
-                                .telefone(telefone)
-                                .cpf(cpf)
-                                .assinaturaAtiva(true)
-                                .hottTransaction(transaction)
-                                .temEmpresa(0)
-                                .senha(null) // SENHA VAZIA: Ele vai criar depois no site
-                                .build();
-                        usuarioRepository.save(novo);
-                        System.out.println("Novo usuário criado via Hotmart (sem senha).");
-                    }
-                }
-        );
-    }
-
-    public void salvar(Usuario usuario) {
-        usuarioRepository.save(usuario);
-    }
-
-    //lista todos os usuários para emilly (pode ser que eu retire um dia isso aqui)
     public List<Usuario> listarTodos() {
         return usuarioRepository.findAll();
     }
 
-    public void atualizarStatusAssinatura(String telefone, String statusHotmart) {
-        Usuario usuario = usuarioRepository.findByTelefone(telefone)
+    @Transactional
+    public void atualizarPerfil(Long idUsuario, PerfilDTO perfilDTO) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        boolean isAprovado = "COMPLETED".equalsIgnoreCase(statusHotmart) || "APPROVED".equalsIgnoreCase(statusHotmart);
-
-        if (isAprovado) {
-            usuario.setAssinaturaAtiva(true);
-            usuario.setDataInatividade(null);//limpa a adata quando está em dia
-        } else {
-            usuario.setAssinaturaAtiva(false);
-
-            if (usuario.getDataInatividade() == null) {
-                usuario.setDataInatividade(LocalDateTime.now());
-            }
-        }
-
+        usuario.setNomeCompleto(perfilDTO.nomeCompleto());
+        usuario.setEmail(perfilDTO.email());
+        usuario.setTelefone(perfilDTO.telefone());
 
         usuarioRepository.save(usuario);
     }
 
-    public void atualizarPerfil(Long idUsuario, PerfilDTO perfilDTO) {
+    public PerfilDTO buscarPerfil(Long idUsuario) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-        usuario.setNomeCompleto(perfilDTO.nomeCompleto());
-        usuario.setEmail(perfilDTO.email());
+
+        return new PerfilDTO(
+                usuario.getNomeCompleto(),
+                usuario.getEmail(),
+                usuario.getTelefone(),
+                usuario.getAmbienteUsuario() != null
+                        ? usuario.getAmbienteUsuario()
+                        : AmbienteUsuario.PESSOAL,
+                usuario.getTemEmpresa()
+        );
+    }
+
+    public AmbientesDTO listarAmbientes(Long idUsuario) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean podeEmpresa = usuario.getTemEmpresa() != null
+                && usuario.getTemEmpresa() == 1;
+
+        return new AmbientesDTO(
+                true,
+                podeEmpresa
+        );
+    }
+
+    @Transactional
+    public void alterarAmbiente(Long idUsuario, AlterarAmbienteDTO alterarAmbienteDTO) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        String ambienteSolicitado = alterarAmbienteDTO.ambiente();
+
+        if ("EMPRESA".equalsIgnoreCase(ambienteSolicitado)) {
+            boolean podeEmpresa = usuario.getTemEmpresa() != null
+                    && usuario.getTemEmpresa() == 1;
+
+            if (!podeEmpresa) {
+                throw new RuntimeException("Você ainda não possui perfil empresarial cadastrado.");
+            }
+
+            usuario.setAmbienteUsuario(AmbienteUsuario.EMPRESA);
+        } else {
+            usuario.setAmbienteUsuario(AmbienteUsuario.PESSOAL);
+        }
 
         usuarioRepository.save(usuario);
     }

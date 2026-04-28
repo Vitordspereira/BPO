@@ -1,5 +1,6 @@
 package hubhds.bpo.model.cartao;
 
+import hubhds.bpo.model.usuario.PerfilFinanceiro;
 import hubhds.bpo.model.usuario.Usuario;
 import jakarta.persistence.*;
 import lombok.*;
@@ -46,6 +47,10 @@ public class Cartao {
 
     @Column(name = "cor", length = 20)
     private String cor;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "perfil_financeiro", nullable = false)
+    private PerfilFinanceiro perfilFinanceiro;
 
     @ManyToOne
     @JoinColumn(name = "id_usuario", nullable = false)

@@ -1,6 +1,7 @@
 package hubhds.bpo.dto.categoria;
 
 import hubhds.bpo.model.categoria.Tipo;
+import hubhds.bpo.model.usuario.PerfilFinanceiro;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -13,6 +14,7 @@ public record CategoriaRequest(
         Tipo tipo,
 
         String icone,
-        String cor
+        String cor,
+        PerfilFinanceiro perfilFinanceiro
 ) {
 }

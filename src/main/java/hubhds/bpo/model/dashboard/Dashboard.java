@@ -1,5 +1,6 @@
 package hubhds.bpo.model.dashboard;
 
+import hubhds.bpo.model.usuario.PerfilFinanceiro;
 import hubhds.bpo.model.usuario.Usuario;
 import hubhds.bpo.model.cartao.Cartao;
 import hubhds.bpo.model.categoria.Categoria;
@@ -41,8 +42,11 @@ public class Dashboard {
     private Tipo tipo;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private MeioPagamento meioPagamento;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "perfil_financeiro", nullable = false)
+    private PerfilFinanceiro perfilFinanceiro;
 
     @ManyToOne
     @JoinColumn(name = "id_usuario", nullable = false)

@@ -2,6 +2,7 @@ package hubhds.bpo.controller.cartao;
 
 import hubhds.bpo.dto.cartao.CartaoDTO;
 import hubhds.bpo.model.cartao.Cartao;
+import hubhds.bpo.model.usuario.PerfilFinanceiro;
 import hubhds.bpo.service.cartao.CartaoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins="*")
 @RestController
 @RequestMapping("/cartao")
 public class CartaoController {
@@ -17,8 +19,8 @@ public class CartaoController {
     private CartaoService cartaoService;
 
     @GetMapping("/listar/{idUsuario}")
-    public ResponseEntity<List<Cartao>> listarPorCartao(@PathVariable Long idUsuario){
-        List<Cartao> cartoes = cartaoService.listarPorCartao(idUsuario);
+    public ResponseEntity<List<Cartao>> listarPorCartao(@PathVariable Long idUsuario, @RequestParam PerfilFinanceiro perfilFinanceiro){
+        List<Cartao> cartoes = cartaoService.listarPorCartao(idUsuario, perfilFinanceiro);
         return ResponseEntity.ok(cartoes);
     }
 

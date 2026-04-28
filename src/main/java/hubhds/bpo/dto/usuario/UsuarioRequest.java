@@ -14,7 +14,16 @@ public record UsuarioRequest(
         String email,
 
         @NotBlank(message = "Telefone é obrigatório.")
-        @Size(max = 20)
+        // Regex explicações:
+        // ^55 -> Começa obrigatoriamente com 55
+        // [1-9]{2} -> DDD (dois dígitos de 1 a 9)
+        // [2-9] -> Primeiro dígito do número (não pode começar com 0 ou 1)
+        // [0-9]{7,8} -> Restante do número (7 dígitos para fixo ou 8 para celular)
+        @Size(min = 12, max = 20)
+        @Pattern(
+                regexp ="^55[1-9]{2}[2-9][0-9]{7,8}",
+                message = "O número de telefone deve ser completo"
+        )
         String telefone,
 
         @NotBlank(message = "Senha é obrigatória.")
@@ -26,16 +35,6 @@ public record UsuarioRequest(
         String senha,
 
         @NotBlank(message = "Confirmação de senha é obrigatória.")
-        String confirmarSenha,
-
-        @NotBlank(message = "CPF é obrigatório.")
-        @Size(min = 11, max = 14, message = "CPF inválido.")
-        String cpf,
-
-        @NotNull(message = "Informe se possui empresa.")
-        Integer temEmpresa,
-
-        @Size(min = 14, max = 18, message = "CNPJ inválido.")
-        String cnpj
-) {
+        String confirmarSenha
+        ) {
 }

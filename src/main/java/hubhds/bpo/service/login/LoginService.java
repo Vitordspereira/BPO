@@ -27,7 +27,7 @@ public class LoginService {
                 .orElseThrow(() -> new RuntimeException("Email ou senha inválidos"));
 
         if (user.getSenha() == null){
-            throw new RuntimeException("Sua senha não foi cadastrada, verifique seu email!");
+            throw new RuntimeException("Sua conta foi criada, mas você ainda precisa definir sua senha.");
         }
 
         //Verifica se a senha
@@ -47,8 +47,7 @@ public class LoginService {
                 user.getNomeCompleto(),
                 user.getEmail(),
                 token,
-                user.getTemEmpresa(),
-                user.getCnpj()
+                user.getTemEmpresa()
         );
     }
 }

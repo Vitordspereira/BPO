@@ -1,5 +1,6 @@
 package hubhds.bpo.controller.usuario;
 
+import hubhds.bpo.dto.usuario.UsuarioCompletaCadastro;
 import hubhds.bpo.dto.usuario.UsuarioRequest;
 import hubhds.bpo.dto.usuario.UsuarioResponse;
 import hubhds.bpo.model.usuario.Usuario;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+@CrossOrigin(origins="*")
 @RestController
 @RequestMapping("/usuario")
 public class UsuarioController {
@@ -24,8 +26,18 @@ public class UsuarioController {
 
     @PostMapping
     public ResponseEntity<UsuarioResponse> cadastrar(@Valid @RequestBody UsuarioRequest request) {
-        UsuarioResponse resp = usuarioService.usuarioResponse(request);
+        UsuarioResponse resp = usuarioService.cadastroManual(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+    }
+
+    @PostMapping("/completar-cadastro")
+    public ResponseEntity<?> completarCadastro(@Valid @RequestBody UsuarioCompletaCadastro usuarioCompletaCadastro) {
+        try {
+            UsuarioResponse usuarioResponse = usuarioService.completarCadastroPosPagamento(usuarioCompletaCadastro);
+            return ResponseEntity.ok(usuarioResponse);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
+        }
     }
 
     // Rota que a Emilly e o n8n vão usar
@@ -33,22 +45,54 @@ public class UsuarioController {
     public ResponseEntity<?> buscarStatusParaAutomacao(@PathVariable String telefone) {
         return usuarioService.buscarPorTelefone(telefone)
                 .map(user -> {
-                    // Cenário: Usuário ENCONTRADO no banco
-                    // Retornamos os dados reais dele
+                    String status = user.getMpStatus() == null ? "" : user.getMpStatus().toLowerCase();
+
+                    boolean cadastroConcluido = user.getSenha() != null && !user.getSenha().isBlank();
+
+                    String tipoUsuario = cadastroConcluido ? "cadastrado" : "cadastro pendente";
+
+                    String nomeExibicao = cadastroConcluido
+                            ? user.getNomeCompleto()
+                            : "Cadastro pendente";
+
+                    String etapa = cadastroConcluido
+                            ? descreverEtapa(status)
+                            : "assinatura em andamento";
+
+
                     return ResponseEntity.ok(Map.of(
-                            "nome_completo", user.getNomeCompleto(),
+                            "nome_completo", nomeExibicao,
                             "telefone", user.getTelefone(),
-                            "status_ativo", user.getAssinaturaAtiva()
+                            "status", status,
+                            "status_ativo", Boolean.TRUE.equals(user.getAssinaturaAtiva()),
+                            "etapa", etapa,
+                            "tipo_usuario", tipoUsuario
                     ));
                 })
                 .orElseGet(() -> {
                     return ResponseEntity.ok(Map.of(
                             "nome_completo", "Desconhecido",
                             "telefone", telefone,
+                            "status", "",
                             "status_ativo", false,
+                            "etapa", "usuário não encontrado",
                             "mensagem", "número de telefone não consta no banco de dados"
                     ));
                 });
+    }
+
+    private String descreverEtapa(String status) {
+        if (status == null || status.isBlank()) {
+            return "sem assinatura de mercado pago";
+        }
+
+        return switch (status.toLowerCase()) {
+            case "authorized" -> "assinatura ativa";
+            case "pending" -> "aguardando pagamento";
+            case "paused" -> "assinatura pausada";
+            case "cancelled" -> "assinatura cancelada";
+            default -> "status desconhecido";
+        };
     }
 
     @GetMapping("/status")
@@ -62,16 +106,5 @@ public class UsuarioController {
         )).toList();
 
         return ResponseEntity.ok(resposta);
-    }
-
-    @PatchMapping
-    public ResponseEntity<?> concluirOnboarding(@PathVariable String email) {
-        return usuarioService.buscarPorTelefone(email)
-                .map(user -> {
-
-                    usuarioService.salvar(user); // Você vai precisar criar esse metodo simples no Service
-                    return ResponseEntity.ok("Onboarding finalizado com sucesso!");
-                })
-                .orElse(ResponseEntity.notFound().build());
     }
 }

@@ -1,73 +1,93 @@
+Caique:
+Categorias:
+Criados dentro do Acessor:
+EDITAR*
+CRIAR*
+DELETAR*
+LISTAR*
 
+Criados dentro do N8N:
+EDITAR
+CRIAR*
+DELETAR
+LISTAR*
 
--- informações de login
+Lançamentos:
+Criados dentro do Acessor:
+CRIAR*
+LISTAR*
+EDITAR*
+EXCLUIR*
+
+Criados dentro do N8N:
+CRIAR
+EDITAR
+EXCLUIR
+LISTAR*
+
+Vitor:
+deixar o endpoint dos ultimos 5 dias organizado com ordem nas entradas de trnsações hoje está bagunçado
+
+GET /dashboard/{idUsuario}/lancamentos
+resposta completa de
+POST /categoria/{idUsuario}/com-lancamento com categoria + lançamento
+
+tratamento oficial para exclusão de categoria com vínculos:
+DELETE /categoria/excluir/{idUsuario}/{idCategoria}?cascade=true
+ou endpoint de reatribuição
+PUT /integracao/n8n/{idTransacao} e DELETE /integracao/n8n/{idTransacao}
+ou persistência obrigatória desses itens no dashboard
+
+Categoria N8N:
+GET - /categoria/n8n/{telefone} :  https://unintoxicating-charmain-unfraudulently.ngrok-free.devcategoria/n8n/5511999999999
+
+Resposta:
+
+[
+    {
+        "idCategoriaN8n": 2,
+        "telefone": "5511999999999",
+        "nome": "Mercado",
+        "tipo": "DESPESA",
+        "icone": null,
+        "cor": null,
+        "perfilFinanceiro": "PESSOAL"
+    }
+]
+
+PUT - /categoria/n8n/{telefone}/{idCategoriaN8n} : https://unintoxicating-charmain-unfraudulently.ngrok-free.devcategoria/n8n/5511999999999/2
+
+Body enviado:
+{
+  "nome": "Mercado Editado",
+  "tipo": "DESPESA",
+  "icone": "car",
+  "cor": "#00AAFF",
+  "perfilFinanceiro": "PESSOAL"
+}
+
+Resposta:
 
 {
-    "email": "vitor@teste.com",
-    "senha": "Senha@987"
-}
-
-//métodos
-
-POST - /login
-
--- informações de cartão
-
-{
-  "nomeCartao": "Meu Cartão Inter",
-  "numeroMascara": "1234.5678.9012.3456",
-  "diaFechamento": 10,
-  "diaVencimento": 17,
-  "bandeira": "MASTERCARD",
-  "categoria": "BLACK",
-  "limiteTotal": 15000.00,
-  "idCadastro": 1
-}
-
-Bandeira {
-    VISA,
-    MASTERCARD,
-    ELO,
-    AMEX,
-    HIPERCARD,
-    OUTRA
-}
-
-Categoria {
-    CLASSIC,
-    GOLD,
-    PLATINUM,
-    BLACK,
-    INFINITE
-}
-
-// métodos
-
-POST - /cartao/cadastrar
-PUT - /cartao/atualizar/{idCartao}
-PATCH - /cartao/altenar-status/{idCartao}
-DEL - /cartao/excluir/{idCartao}
-
--- informações de categoria
-
-{
-    "nome": "Oficina mecânica",
+    "idCategoriaN8n": 2,
+    "telefone": "5511997762803",
+    "nome": "Mercado Editado",
     "tipo": "DESPESA",
-    "icone": null,
-    "cor": null
+    "icone": "car",
+    "cor": "#00AAFF",
+    "perfilFinanceiro": "PESSOAL"
 }
 
-tipo {
- RECEITA,
- DESPESA
-}
+DELETE - /categoria/n8n/{telefone}/{idCategoriaN8n} : https://unintoxicating-charmain-unfraudulently.ngrok-free.devcategoria/n8n/5511999999999/2
 
-//métodos
+### Categoria Front
 
-POST - /categoria/{idUsuario}
-GET - /categoria/listar/{idUsuario}
-PUT - /categoria/editar/{idUsuario}/{idCategoria}
-DEL - /categoria/excluir/{idUsuario}/{idCategoria}
+POST - /categoria/{idUsuario} : https://unintoxicating-charmain-unfraudulently.ngrok-free.dev/categoria/1
 
+GET - /categoria/listar/{idUsuario} :  https://unintoxicating-charmain-unfraudulently.ngrok-free.dev/categoria/listar/22?perfilFinanceiro=PESSOAL ou EMPRESA
+
+PUT - /categoria/editar/{idUsuario}/{categoriaRef} : https://unintoxicating-charmain-unfraudulently.ngrok-free.dev/categoria/editar/1/categoriaRef
+
+DEL - /categoria/excluir/{idUsuario}/{idCategoria} : https://unintoxicating-charmain-unfraudulently.ngrok-free.dev/categoria/excluir/1/19
 
 

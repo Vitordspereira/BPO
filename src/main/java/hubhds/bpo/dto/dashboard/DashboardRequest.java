@@ -2,6 +2,7 @@ package hubhds.bpo.dto.dashboard;
 
 import hubhds.bpo.model.categoria.Tipo;
 import hubhds.bpo.model.dashboard.MeioPagamento;
+import hubhds.bpo.model.usuario.PerfilFinanceiro;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -22,12 +23,12 @@ public record DashboardRequest(
         @NotNull
         Tipo tipo,
 
-        @NotNull
         MeioPagamento meioPagamento,
 
-        @NotNull
-        Long idCategoria,
-
-        Long idCartao
+        @NotBlank
+        String categoria,
+        Long idUsuario,
+        Long idCartao,
+        PerfilFinanceiro perfilFinanceiro
 ) {
 }

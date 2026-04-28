@@ -2,10 +2,9 @@ package hubhds.bpo.controller.dashboard;
 
 import hubhds.bpo.dto.dashboard.DashboardRequest;
 import hubhds.bpo.dto.dashboard.DashboardResponse;
-import hubhds.bpo.dto.dashboard.hotmart.HotmartWebhookDTO;
 import hubhds.bpo.dto.dashboard.resumo.DashboardResumoDTO;
 import hubhds.bpo.model.categoria.Tipo;
-import hubhds.bpo.model.dashboard.MeioPagamento;
+import hubhds.bpo.model.usuario.PerfilFinanceiro;
 import hubhds.bpo.service.dashboard.DashboardService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,12 +12,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-
+@CrossOrigin(origins="*")
 @RestController
 @RequestMapping("/dashboard")
 public class DashboardController {
@@ -26,73 +23,70 @@ public class DashboardController {
     @Autowired
     private DashboardService dashboardService;
 
-    //Cria lançamento de receita
+    //Cria lançamento de receita e despesa
     @PostMapping("/{idUsuario}")
-    public ResponseEntity<DashboardResponse> criar(
+    public ResponseEntity<?> criar(
             @PathVariable Long idUsuario,
             @RequestBody @Valid DashboardRequest dashboardRequest
             ){
-        DashboardResponse dashboardResponse = dashboardService.salvar(idUsuario, dashboardRequest);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(dashboardResponse);
+        try {
+            DashboardResponse dashboardResponse = dashboardService.salvar(idUsuario, dashboardRequest);
+            return ResponseEntity.status(HttpStatus.CREATED).body(dashboardResponse);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("erro",e.getMessage()));
+        }
     }
 
     //Como o próprio nome diz gráfico de pizza na pág principal
     @GetMapping("/grafico-pizza/{idUsuario}")
-    public ResponseEntity<List<Object[]>> buscarDadosPizza(@PathVariable Long idUsuario) {
-        List<Object[]> dados = dashboardService.buscarDadosGraficoPizza(idUsuario);
+    public ResponseEntity<List<Object[]>> buscarDadosPizza(@PathVariable Long idUsuario, @RequestParam PerfilFinanceiro perfilFinanceiro, @RequestParam Tipo tipo) {
+        List<Object[]> dados = dashboardService.buscarDadosGraficoPizza(idUsuario, perfilFinanceiro, tipo);
         return ResponseEntity.ok(dados);
     }
 
     // Esse endpoint vai alimentar os Cards de Entradas/Saídas
     @GetMapping("/total/{idUsuario}")
-    public ResponseEntity<List<Object[]>> buscarResumoTotal(@PathVariable Long idUsuario) {
-        List<Object[]> resumo = dashboardService.buscarTotaisCards(idUsuario);
+    public ResponseEntity<List<Object[]>> buscarResumoTotal(@PathVariable Long idUsuario, @RequestParam PerfilFinanceiro perfilFinanceiro) {
+        List<Object[]> resumo = dashboardService.buscarTotaisCards(idUsuario, perfilFinanceiro);
         return ResponseEntity.ok(resumo);
     }
 
     //Relatório de completo
-    @GetMapping("/detalhado/{idUsuario}")
-    public ResponseEntity<DashboardResumoDTO> buscarResumo(@PathVariable Long idUsuario) {
-        DashboardResumoDTO resumo = dashboardService.buscarResumo(idUsuario);
+    @GetMapping("/resumo/{idUsuario}")
+    public ResponseEntity<DashboardResumoDTO> buscarResumo(@PathVariable Long idUsuario, @RequestParam PerfilFinanceiro perfilFinanceiro) {
+        DashboardResumoDTO resumo = dashboardService.buscarResumo(idUsuario, perfilFinanceiro);
         return  ResponseEntity.ok(resumo);
     }
 
-    @PostMapping("/salvar/{idUsuario}")
-    public ResponseEntity<?> salvarLancamento(
+    //Edita uma transação
+    @PutMapping("/{idUsuario}/{idDashboard}")
+    public ResponseEntity<?> atualizar(
             @PathVariable Long idUsuario,
-            @Valid @RequestBody DashboardRequest dashboardRequest) {
-        try {
-            DashboardResponse dashboardResponse = dashboardService.salvar(idUsuario, dashboardRequest);
-            return ResponseEntity.status(HttpStatus.CREATED).body(dashboardResponse);
-
+            @PathVariable Long idDashboard,
+            @RequestBody @Valid DashboardRequest dashboardRequest
+    ) {
+        try{
+            DashboardResponse dashboardResponse = dashboardService.atualizar(idUsuario, idDashboard, dashboardRequest);
+            return ResponseEntity.ok(dashboardResponse);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("erro", e.getMessage()));
         }
     }
 
-    //Essa controller consta na pasta webhook que está dentro de dashboard
-    @PostMapping("/webhook/hotmart/{idUsuario}")
-    public ResponseEntity<Void> receberVendaHotmart(
+    //Exclui uma transação
+    @DeleteMapping("/{idUsuario}/{idDashboard}")
+    public ResponseEntity<?> deletar(
             @PathVariable Long idUsuario,
-            @RequestBody HotmartWebhookDTO hotmartWebhookDTO){
-
-        //Conta matemática
-        BigDecimal valorLiquido = hotmartWebhookDTO.hotmartData().purchase().full_price_value()
-                .subtract(hotmartWebhookDTO.hotmartData().purchase().comission_value());
-
-    DashboardRequest dashboardRequest = new DashboardRequest(
-            "Venda Hotmart: " + hotmartWebhookDTO.hotmartData().product().name(),
-            valorLiquido,
-            LocalDate.now(),
-            Tipo.RECEITA,
-            MeioPagamento.HOTMART,
-            1L,
-            null
-    );
-
-    dashboardService.salvar(idUsuario, dashboardRequest);
-    return ResponseEntity.ok().build();
+            @PathVariable Long idDashboard
+    ) {
+        try {
+            dashboardService.deletar(idUsuario, idDashboard);
+            return ResponseEntity.ok(Map.of("mensagem", "Transação excluida com sucesso"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body((Map.of("erro", e.getMessage())));
+        }
     }
 }

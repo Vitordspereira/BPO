@@ -25,12 +25,11 @@ public record DashboardResponse(
                 dashboard.getValor(),
                 dashboard.getData(),
                 dashboard.getTipo().name(),
-                dashboard.getMeioPagamento().name(),
+                dashboard.getMeioPagamento() !=null ? dashboard.getMeioPagamento().name() : null,
                 dashboard.getCategoria().getNome(),
                 dashboard.getCategoria().getCor(),
                 dashboard.getCategoria().getIcone(),
                 dashboard.getCartao() != null ? dashboard.getCartao().getNomeCartao() : null
-        ); {
-        }
+        );
     }
 }

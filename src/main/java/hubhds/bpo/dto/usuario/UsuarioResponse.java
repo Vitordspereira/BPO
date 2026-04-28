@@ -5,9 +5,6 @@ public record UsuarioResponse(
         String nomeCompleto,
         String email,
         String telefone,
-        String cpf,
-        Integer  temEmpresa,
-        String cnpj,
         Boolean assinaturaAtiva
 ) {}
 
