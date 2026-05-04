@@ -3,7 +3,7 @@ package hubhds.bpo.service.checkout;
 import hubhds.bpo.dto.assinatura.Assinatura;
 import hubhds.bpo.dto.checkout.CheckoutAssinaturaRequest;
 import hubhds.bpo.dto.checkout.CheckoutAssinaturaResponse;
-import hubhds.bpo.model.dashboard.MeioPagamento;
+import hubhds.bpo.model.meioPagamentoCheckout.MeioPagamentoCheckout;
 import hubhds.bpo.model.preCadastro.PreCadastro;
 import hubhds.bpo.repository.preCadastro.PreCadastroRepository;
 import hubhds.bpo.service.AssinaturaMercadoPagoService.AssinaturaMercadoPagoService;
@@ -39,7 +39,7 @@ public class CheckoutAssinaturaService {
         String payerEmail = request.payerEmail().trim().toLowerCase();
         String plano = PLANO_PADRAO;
 
-        MeioPagamento meioPagamento = MeioPagamento.fromMercadoPago(request.paymentTypeId());
+        MeioPagamentoCheckout meioPagamento = MeioPagamentoCheckout.fromMercadoPago(request.paymentTypeId());
 
         validarParcelas(meioPagamento, request.installments());
 
@@ -109,18 +109,18 @@ public class CheckoutAssinaturaService {
         }
     }
 
-    private void validarParcelas(MeioPagamento meioPagamento, Integer installments) {
+    private void validarParcelas(MeioPagamentoCheckout meioPagamento, Integer installments) {
         if (installments == null) {
             throw new IllegalArgumentException("Informe a quantidade de parcelas.");
         }
 
-        if (meioPagamento == MeioPagamento.CREDITO) {
+        if (meioPagamento == MeioPagamentoCheckout.CREDITO) {
             if (installments < 1 || installments > MAX_PARCELAS_CREDITO) {
                 throw new IllegalArgumentException("Pagamento no crédito permite de 1 até 12 parcelas.");
             }
         }
 
-        if (meioPagamento == MeioPagamento.DEBITO) {
+        if (meioPagamento == MeioPagamentoCheckout.DEBITO) {
             if (installments != 1) {
             }
         }
