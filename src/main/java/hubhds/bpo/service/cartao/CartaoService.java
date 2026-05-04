@@ -30,6 +30,7 @@ public class CartaoService {
 
     private String formatarNumeroCartao(String numero) {
         if (numero == null) return null;
+
         String apenasNumeros = numero.replaceAll("\\D", "");
         return apenasNumeros.replaceAll("(\\d{4})(?=\\d)", "$1.");
     }
@@ -38,15 +39,15 @@ public class CartaoService {
     public Cartao criarCartao(CartaoDTO cartaoDTO) {
 
         if (cartaoDTO.nomeCartao() == null || cartaoDTO.nomeCartao().isBlank()) {
-            throw new RuntimeException("nome do cartão é obrigatório");
+            throw new RuntimeException("Nome do cartão é obrigatório.");
         }
 
         if (cartaoDTO.idUsuario() == null) {
-            throw new RuntimeException("O ID do usuário tem de aparecer");
+            throw new RuntimeException("O ID do usuário é obrigatório.");
         }
 
         if (cartaoDTO.perfilFinanceiro() == null) {
-            throw new RuntimeException("O perfil financeiro é obrigatório");
+            throw new RuntimeException("O perfil financeiro é obrigatório.");
         }
 
         Usuario usuario = usuarioRepository.findById(cartaoDTO.idUsuario())
@@ -71,20 +72,12 @@ public class CartaoService {
         return cartaoRepository.save(cartao);
     }
 
-<<<<<<< HEAD
     public List<Cartao> listarPorCartao(Long idUsuario, PerfilFinanceiro perfilFinanceiro) {
         return cartaoRepository.findByUsuario_IdUsuarioAndPerfilFinanceiro(idUsuario, perfilFinanceiro);
     }
 
+    @Transactional
     public Cartao atualizarCartao(Long idCartao, CartaoDTO cartaoDTO) {
-=======
-    public List<Cartao> listarPorCartao(Long idUsuario) {
-        return cartaoRepository.findByUsuario_IdUsuario(idUsuario);
-    }
-
-    public Cartao atualizarCartao(Long idCartao, CartaoDTO cartaoDTO){
-        //Buscar cartão no banco
->>>>>>> 9b5bccc (subindo checkout)
         Cartao cartaoExistente = cartaoRepository.findById(idCartao)
                 .orElseThrow(() -> new RuntimeException("Cartão não encontrado com o ID: " + idCartao));
 
@@ -128,7 +121,7 @@ public class CartaoService {
             cartaoExistente.setCor(cartaoDTO.cor());
         }
 
-        if (cartaoDTO.perfilFinanceiro() !=null) {
+        if (cartaoDTO.perfilFinanceiro() != null) {
             cartaoExistente.setPerfilFinanceiro(cartaoDTO.perfilFinanceiro());
         }
 
@@ -150,13 +143,8 @@ public class CartaoService {
         cartaoRepository.deleteById(idCartao);
     }
 
-<<<<<<< HEAD
     @Transactional
     public void alternarStatusCartao(Long idCartao) {
-=======
-    @Transactional 
-    public void alternarStatusCartao(Long idCartao){
->>>>>>> 9b5bccc (subindo checkout)
         Cartao cartao = cartaoRepository.findById(idCartao)
                 .orElseThrow(() -> new RuntimeException("Cartão não encontrado"));
 

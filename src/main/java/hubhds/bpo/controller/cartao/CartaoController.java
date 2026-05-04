@@ -9,11 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
-<<<<<<< HEAD
-@CrossOrigin(origins="*")
-=======
->>>>>>> 9b5bccc (subindo checkout)
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/cartao")
 public class CartaoController {
@@ -22,13 +20,11 @@ public class CartaoController {
     private CartaoService cartaoService;
 
     @GetMapping("/listar/{idUsuario}")
-<<<<<<< HEAD
-    public ResponseEntity<List<Cartao>> listarPorCartao(@PathVariable Long idUsuario, @RequestParam PerfilFinanceiro perfilFinanceiro){
+    public ResponseEntity<List<Cartao>> listarPorCartao(
+            @PathVariable Long idUsuario,
+            @RequestParam PerfilFinanceiro perfilFinanceiro
+    ) {
         List<Cartao> cartoes = cartaoService.listarPorCartao(idUsuario, perfilFinanceiro);
-=======
-    public ResponseEntity<List<Cartao>> listarPorCartao(@PathVariable Long idUsuario){
-        List<Cartao> cartoes = cartaoService.listarPorCartao(idUsuario);
->>>>>>> 9b5bccc (subindo checkout)
         return ResponseEntity.ok(cartoes);
     }
 
@@ -39,7 +35,10 @@ public class CartaoController {
     }
 
     @PutMapping("/atualizar/{idCartao}")
-    public ResponseEntity<Cartao> atualizar(@PathVariable Long idCartao, @RequestBody CartaoDTO cartaoDTO) {
+    public ResponseEntity<Cartao> atualizar(
+            @PathVariable Long idCartao,
+            @RequestBody CartaoDTO cartaoDTO
+    ) {
         Cartao cartaoAtualizado = cartaoService.atualizarCartao(idCartao, cartaoDTO);
         return ResponseEntity.ok(cartaoAtualizado);
     }
@@ -51,7 +50,7 @@ public class CartaoController {
     }
 
     @DeleteMapping("/excluir/{idCartao}")
-    public ResponseEntity<Cartao> excluir(@PathVariable Long idCartao) {
+    public ResponseEntity<Void> excluir(@PathVariable Long idCartao) {
         cartaoService.excluirCartao(idCartao);
         return ResponseEntity.noContent().build();
     }
