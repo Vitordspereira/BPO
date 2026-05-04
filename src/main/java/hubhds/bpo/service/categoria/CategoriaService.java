@@ -93,16 +93,24 @@ public class CategoriaService {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        // NOVO:
-        // Busca as categorias normais do projeto.
-        // Essas são as categorias que o usuário criou manualmente.
-        List<CategoriaUnificadaResponse> categoriasProjeto =
-                categoriaRepository.findByUsuario_IdUsuarioAndPerfilFinanceiroOrderByNomeAsc(
-                                idUsuario,
-                                perfilFinanceiro
-                        )
-                        .stream()
-                        .map(categoria -> new CategoriaUnificadaResponse(
+        List<CategoriaUnificadaResponse> resultado = new ArrayList<>();
+        List<String> chavesJaAdicionadas = new ArrayList<>();
+
+        // 1. Primeiro adiciona as categorias criadas manualmente no projeto.
+        // Essas têm prioridade. Se existir "Saude" aqui, a "Saude" do N8N não entra depois.
+        categoriaRepository.findByUsuario_IdUsuarioAndPerfilFinanceiroOrderByNomeAsc(
+                        idUsuario,
+                        perfilFinanceiro
+                )
+                .forEach(categoria -> {
+                    String chave = gerarChaveCategoria(
+                            categoria.getNome(),
+                            categoria.getTipo() != null ? categoria.getTipo().name() : null,
+                            categoria.getPerfilFinanceiro() != null ? categoria.getPerfilFinanceiro().name() : null
+                    );
+
+                    if (!chavesJaAdicionadas.contains(chave)) {
+                        resultado.add(new CategoriaUnificadaResponse(
                                 categoria.getIdCategoria(),
                                 categoria.getNome(),
                                 categoria.getTipo() != null ? categoria.getTipo().name() : null,
@@ -110,33 +118,28 @@ public class CategoriaService {
                                 categoria.getCor(),
                                 categoria.getPerfilFinanceiro() != null ? categoria.getPerfilFinanceiro().name() : null,
                                 "PROJETO"
-                        ))
-                        .toList();
+                        ));
 
-        // NOVO:
-        // Aqui será montada a lista de categorias vindas do N8N.
-        // Começa vazia porque pode existir usuário sem telefone cadastrado.
-        List<CategoriaUnificadaResponse> categoriasN8n = new ArrayList<>();
+                        chavesJaAdicionadas.add(chave);
+                    }
+                });
 
-        // NOVO:
-        // As categorias do N8N são vinculadas pelo telefone.
-        // Então pegamos o telefone do usuário para procurar em categoria_n8n.
+        // 2. Depois adiciona categorias vindas do N8N.
+        // Só entra se ainda não existir categoria igual no projeto ou na própria lista.
         if (usuario.getTelefone() != null && !usuario.getTelefone().isBlank()) {
-            categoriasN8n =
-                    categoriaN8nRepository.findByTelefoneOrderByNomeAsc(usuario.getTelefone())
-                            .stream()
+            categoriaN8nRepository.findByTelefoneOrderByNomeAsc(usuario.getTelefone())
+                    .stream()
+                    .filter(categoria -> categoria.getPerfilFinanceiro() != null)
+                    .filter(categoria -> categoria.getPerfilFinanceiro().equalsIgnoreCase(perfilFinanceiro.name()))
+                    .forEach(categoria -> {
+                        String chave = gerarChaveCategoria(
+                                categoria.getNome(),
+                                categoria.getTipo(),
+                                categoria.getPerfilFinanceiro()
+                        );
 
-                            // NOVO:
-                            // Garante que vamos listar apenas categorias do mesmo perfil financeiro.
-                            // Se a tela pediu PESSOAL, só entram categorias N8N PESSOAL.
-                            // Se a tela pediu EMPRESA, só entram categorias N8N EMPRESA.
-                            .filter(categoria -> categoria.getPerfilFinanceiro() != null)
-                            .filter(categoria -> categoria.getPerfilFinanceiro().equalsIgnoreCase(perfilFinanceiro.name()))
-
-                            // NOVO:
-                            // Converte CategoriaN8n para CategoriaUnificadaResponse.
-                            // A origem "N8N" serve para o front saber que essa categoria veio do WhatsApp.
-                            .map(categoria -> new CategoriaUnificadaResponse(
+                        if (!chavesJaAdicionadas.contains(chave)) {
+                            resultado.add(new CategoriaUnificadaResponse(
                                     categoria.getIdCategoriaN8n(),
                                     categoria.getNome(),
                                     categoria.getTipo(),
@@ -144,18 +147,12 @@ public class CategoriaService {
                                     categoria.getCor(),
                                     categoria.getPerfilFinanceiro(),
                                     "N8N"
-                            ))
-                            .toList();
-        }
+                            ));
 
-        // NOVO:
-        // Junta as duas listas:
-        // categorias criadas no projeto + categorias vindas do N8N.
-        //
-        // É aqui que a "Automatica" passa a aparecer junto com as demais.
-        List<CategoriaUnificadaResponse> resultado = new ArrayList<>();
-        resultado.addAll(categoriasProjeto);
-        resultado.addAll(categoriasN8n);
+                            chavesJaAdicionadas.add(chave);
+                        }
+                    });
+        }
 
         return resultado;
     }
@@ -318,5 +315,25 @@ public class CategoriaService {
         categoria = categoriaRepository.save(categoria);
 
         return new CategoriaResponse(categoria);
+    }
+
+    private String gerarChaveCategoria(String nome, String tipo, String perfilFinanceiro) {
+        String nomeNormalizado = normalizarTexto(nome);
+        String tipoNormalizado = tipo != null ? tipo.trim().toUpperCase() : "";
+        String perfilNormalizado = perfilFinanceiro != null ? perfilFinanceiro.trim().toUpperCase() : "";
+
+        return nomeNormalizado + "|" + tipoNormalizado + "|" + perfilNormalizado;
+    }
+
+    private String normalizarTexto(String texto) {
+        if (texto == null) {
+            return "";
+        }
+
+        return Normalizer.normalize(texto, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .trim()
+                .toLowerCase()
+                .replaceAll("\\s+", " ");
     }
 }
