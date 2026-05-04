@@ -10,7 +10,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+<<<<<<< HEAD
 @CrossOrigin(origins="*")
+=======
+>>>>>>> 9b5bccc (subindo checkout)
 @RestController
 @RequestMapping("/cartao")
 public class CartaoController {
@@ -19,8 +22,13 @@ public class CartaoController {
     private CartaoService cartaoService;
 
     @GetMapping("/listar/{idUsuario}")
+<<<<<<< HEAD
     public ResponseEntity<List<Cartao>> listarPorCartao(@PathVariable Long idUsuario, @RequestParam PerfilFinanceiro perfilFinanceiro){
         List<Cartao> cartoes = cartaoService.listarPorCartao(idUsuario, perfilFinanceiro);
+=======
+    public ResponseEntity<List<Cartao>> listarPorCartao(@PathVariable Long idUsuario){
+        List<Cartao> cartoes = cartaoService.listarPorCartao(idUsuario);
+>>>>>>> 9b5bccc (subindo checkout)
         return ResponseEntity.ok(cartoes);
     }
 

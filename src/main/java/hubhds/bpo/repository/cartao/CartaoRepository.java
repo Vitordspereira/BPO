@@ -10,6 +10,7 @@ import java.util.List;
 
 @Repository
 public interface CartaoRepository extends JpaRepository<Cartao, Long> {
+<<<<<<< HEAD
     @Query("""
        SELECT c
        FROM Cartao c
@@ -17,4 +18,8 @@ public interface CartaoRepository extends JpaRepository<Cartao, Long> {
          AND c.perfilFinanceiro = :perfilFinanceiro
        """)
     List<Cartao> findByUsuario_IdUsuarioAndPerfilFinanceiro(Long idUsuario, PerfilFinanceiro perfilFinanceiro);
+=======
+    @Query("SELECT c FROM Cartao c WHERE c.usuario.id = :idUsuario")
+    List<Cartao> findByUsuario_IdUsuario(Long idUsuario);
+>>>>>>> 9b5bccc (subindo checkout)
 }

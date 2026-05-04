@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Caique:
 Categorias:
 Criados dentro do Acessor:
@@ -72,6 +73,67 @@ Resposta:
     "idCategoriaN8n": 2,
     "telefone": "5511997762803",
     "nome": "Mercado Editado",
+=======
+por enquato manter receitas e despesas sobre webhook,
+vou ver ainda se é melhor deixar as transações como neutra né String ou com foco apenas no webhook,
+dependendo acredito que seja fácil de alterar.
+
+-- excluir categoria, editar e excluir cartão dando erro 500
+
+
+-- informações de login
+
+{
+    "email": "vitor@teste.com",
+    "senha": "Senha@987"
+}
+
+//métodos
+
+POST - /login
+
+-- informações de cartão
+
+{
+  "nomeCartao": "Meu Cartão Inter",
+  "numeroMascara": "1234.5678.9012.3456",
+  "diaFechamento": 10,
+  "diaVencimento": 17,
+  "bandeira": "MASTERCARD",
+  "categoria": "BLACK",
+  "limiteTotal": 15000.00,
+  "idCadastro": 1
+}
+
+Bandeira {
+    VISA,
+    MASTERCARD,
+    ELO,
+    AMEX,
+    HIPERCARD,
+    OUTRA
+}
+
+Categoria {
+    CLASSIC,
+    GOLD,
+    PLATINUM,
+    BLACK,
+    INFINITE
+}
+
+// métodos
+
+POST - /cartao/cadastrar
+PUT - /cartao/atualizar/{idCartao}
+PATCH - /cartao/altenar-status/{idCartao}
+DEL - /cartao/excluir/{idCartao}
+
+-- informações de categoria
+
+{
+    "nome": "Oficina mecânica",
+>>>>>>> 9b5bccc (subindo checkout)
     "tipo": "DESPESA",
     "icone": "car",
     "cor": "#00AAFF",
@@ -93,5 +155,6 @@ DEL - /categoria/excluir/{idUsuario}/{idCategoria} : https://unintoxicating-char
 POST - /conta/esqueci-senha
 
 POST - /conta/redefinir-senha
+
 
 
