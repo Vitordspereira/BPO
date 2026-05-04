@@ -5,12 +5,15 @@ import hubhds.bpo.dto.lancamento.LancamentoResponse;
 import hubhds.bpo.dto.lancamento.editar.LancamentoAtualizar;
 import hubhds.bpo.model.categoria.Categoria;
 import hubhds.bpo.model.lancamento.Lancamento;
+import hubhds.bpo.model.usuario.PerfilFinanceiro;
 import hubhds.bpo.model.usuario.Usuario;
 import hubhds.bpo.repository.categoria.CategoriaRepository;
 import hubhds.bpo.repository.lancamento.LancamentoRepository;
 import hubhds.bpo.repository.usuario.UsuarioRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 
 @Service
@@ -162,4 +165,35 @@ public class LancamentoService {
                 ))
                 .toList();
     } */
+
+    public List<LancamentoResponse> listarPorUsuario(Long idUsuario, PerfilFinanceiro perfilFinanceiro) {
+        usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        List<Lancamento> lancamentos;
+
+        if (perfilFinanceiro != null) {
+            lancamentos = lancamentoRepository
+                    .findByUsuarioIdUsuarioAndTipoGastoOrderByDataTransacaoDesc(idUsuario, perfilFinanceiro);
+        } else {
+            lancamentos = lancamentoRepository
+                    .findByUsuarioIdUsuarioOrderByDataTransacaoDesc(idUsuario);
+        }
+
+        return lancamentos.stream()
+                .map(l -> new LancamentoResponse(
+                        l.getIdLancamento(),
+                        l.getTransactionId(),
+                        l.getCategoria().getIdCategoria(),
+                        l.getIdDashboard(),
+                        l.getCategoria().getNome(),
+                        l.getMovimentacao(),
+                        l.getValor(),
+                        l.getDescricao(),
+                        l.getDataTransacao(),
+                        l.getFormaPagamento(),
+                        l.getTipoGasto()
+                ))
+                .toList();
+    }
 }

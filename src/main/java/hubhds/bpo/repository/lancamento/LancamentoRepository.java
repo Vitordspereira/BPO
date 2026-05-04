@@ -1,6 +1,7 @@
 package hubhds.bpo.repository.lancamento;
 
 import hubhds.bpo.model.lancamento.Lancamento;
+import hubhds.bpo.model.usuario.PerfilFinanceiro;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,6 +13,13 @@ public interface LancamentoRepository extends JpaRepository<Lancamento, Long> {
     List<Lancamento> findByCategoriaIdCategoria(Long idCategoria);
 
     List<Lancamento> findByUsuarioIdUsuario(Long idUsuario);
+
+    List<Lancamento> findByUsuarioIdUsuarioOrderByDataTransacaoDesc(Long idUsuario);
+
+    List<Lancamento> findByUsuarioIdUsuarioAndTipoGastoOrderByDataTransacaoDesc(
+            Long idUsuario,
+            PerfilFinanceiro tipoGasto
+    );
 
     void deleteByCategoriaIdCategoria(Long idCategoria);
 }

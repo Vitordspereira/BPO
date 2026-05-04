@@ -3,12 +3,14 @@ package hubhds.bpo.controller.lancamento;
 import hubhds.bpo.dto.lancamento.LancamentoRequest;
 import hubhds.bpo.dto.lancamento.LancamentoResponse;
 import hubhds.bpo.dto.lancamento.editar.LancamentoAtualizar;
+import hubhds.bpo.model.usuario.PerfilFinanceiro;
 import hubhds.bpo.service.lancamento.LancamentoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -20,6 +22,20 @@ public class LancamentoController {
 
     public LancamentoController(LancamentoService lancamentoService) {
         this.lancamentoService = lancamentoService;
+    }
+
+    @GetMapping("/listar/{idUsuario}")
+    public ResponseEntity<?> listarLancamentos(
+            @PathVariable Long idUsuario,
+            @RequestParam(required = false) PerfilFinanceiro perfilFinanceiro
+    ) {
+        try {
+            List<LancamentoResponse> response = lancamentoService.listarPorUsuario(idUsuario, perfilFinanceiro);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("mensagem", e.getMessage()));
+        }
     }
 
     @PostMapping("/{idUsuario}")
