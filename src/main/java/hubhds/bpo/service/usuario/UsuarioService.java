@@ -29,68 +29,78 @@ public class UsuarioService {
 
     @Transactional
     public UsuarioResponse cadastroManual(UsuarioRequest usuarioRequest) {
-        Optional<Usuario> usuarioExistente = usuarioRepository.findByTelefone(usuarioRequest.telefone());
-
-        if (usuarioExistente.isPresent()) {
-            Usuario usuario = usuarioExistente.get();
-
-            // Se já existe usuário por telefone e ainda não tem senha,
-            // significa que ele veio de fluxo externo e está finalizando cadastro agora
-            if (usuario.getSenha() == null || usuario.getSenha().isBlank()) {
-                usuario.setNomeCompleto(usuarioRequest.nomeCompleto());
-                usuario.setEmail(usuarioRequest.email());
-                usuario.setTelefone(usuarioRequest.telefone());
-                usuario.setSenha(passwordEncoder.encode(usuarioRequest.senha()));
-
-                if (usuario.getTemEmpresa() == null) {
-                    usuario.setTemEmpresa(0);
-                }
-
-                if (usuario.getAmbienteUsuario() == null) {
-                    usuario.setAmbienteUsuario(AmbienteUsuario.PESSOAL);
-                }
-
-                Usuario salvo = usuarioRepository.save(usuario);
-                return mapearParaResponse(salvo);
-            } else {
-                throw new RuntimeException("Este telefone já possui uma conta cadastrada.");
-            }
-        }
-
-        Usuario novoUsuario = Usuario.builder()
-                .nomeCompleto(usuarioRequest.nomeCompleto())
-                .email(usuarioRequest.email())
-                .telefone(usuarioRequest.telefone())
-                .senha(passwordEncoder.encode(usuarioRequest.senha()))
-                .temEmpresa(0)
-                .assinaturaAtiva(false)
-                .ambienteUsuario(AmbienteUsuario.PESSOAL)
-                .build();
-
-        Usuario salvo = usuarioRepository.save(novoUsuario);
-        return mapearParaResponse(salvo);
+        return finalizarCadastroPosPagamento(
+                usuarioRequest.nomeCompleto(),
+                usuarioRequest.email(),
+                usuarioRequest.telefone(),
+                usuarioRequest.senha()
+        );
     }
 
     @Transactional
     public UsuarioResponse completarCadastroPosPagamento(UsuarioCompletaCadastro usuarioCompletaCadastro) {
-        Usuario usuario = usuarioRepository.findByTelefone(usuarioCompletaCadastro.telefone())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado para esse telefone."));
+        return finalizarCadastroPosPagamento(
+                usuarioCompletaCadastro.nomeCompleto(),
+                usuarioCompletaCadastro.email(),
+                usuarioCompletaCadastro.telefone(),
+                usuarioCompletaCadastro.senha()
+        );
+    }
+
+    private UsuarioResponse finalizarCadastroPosPagamento(
+            String nomeCompleto,
+            String email,
+            String telefone,
+            String senha
+    ) {
+        String telefoneLimpo = limparTelefone(telefone);
+
+        if (telefoneLimpo == null || telefoneLimpo.isBlank()) {
+            throw new RuntimeException("Telefone é obrigatório.");
+        }
+
+        if (email == null || email.isBlank()) {
+            throw new RuntimeException("E-mail é obrigatório.");
+        }
+
+        if (senha == null || senha.isBlank()) {
+            throw new RuntimeException("Senha é obrigatória.");
+        }
+
+        if (nomeCompleto == null || nomeCompleto.isBlank()) {
+            throw new RuntimeException("Nome completo é obrigatório.");
+        }
+
+        String emailTratado = email.trim().toLowerCase();
+
+        Usuario usuario = usuarioRepository.findByTelefone(telefoneLimpo)
+                .orElseThrow(() -> new RuntimeException(
+                        "Não encontramos uma assinatura vinculada a este telefone."
+                ));
 
         boolean assinaturaValida = Boolean.TRUE.equals(usuario.getAssinaturaAtiva())
                 || "authorized".equalsIgnoreCase(usuario.getMpStatus());
 
         if (!assinaturaValida) {
-            throw new RuntimeException("Cadastro não permitido: assinatura ainda não está ativa.");
+            throw new RuntimeException(
+                    "Cadastro não permitido: sua assinatura ainda não está ativa."
+            );
         }
 
         if (usuario.getSenha() != null && !usuario.getSenha().isBlank()) {
-            throw new RuntimeException("Este usuário já concluiu o cadastro.");
+            throw new RuntimeException("Este telefone já possui cadastro finalizado.");
         }
 
-        usuario.setNomeCompleto(usuarioCompletaCadastro.nomeCompleto().trim());
-        usuario.setEmail(usuarioCompletaCadastro.email().trim().toLowerCase());
-        usuario.setTelefone(usuarioCompletaCadastro.telefone().trim());
-        usuario.setSenha(passwordEncoder.encode(usuarioCompletaCadastro.senha()));
+        usuarioRepository.findByEmail(emailTratado).ifPresent(usuarioComMesmoEmail -> {
+            if (!usuarioComMesmoEmail.getIdUsuario().equals(usuario.getIdUsuario())) {
+                throw new RuntimeException("Este e-mail já está cadastrado.");
+            }
+        });
+
+        usuario.setNomeCompleto(nomeCompleto.trim());
+        usuario.setEmail(emailTratado);
+        usuario.setTelefone(telefoneLimpo);
+        usuario.setSenha(passwordEncoder.encode(senha));
 
         if (usuario.getTemEmpresa() == null) {
             usuario.setTemEmpresa(0);
@@ -105,7 +115,15 @@ public class UsuarioService {
     }
 
     public Optional<Usuario> buscarPorTelefone(String telefone) {
-        return usuarioRepository.findByTelefone(telefone);
+        return usuarioRepository.findByTelefone(limparTelefone(telefone));
+    }
+
+    private String limparTelefone(String telefone) {
+        if (telefone == null) {
+            return null;
+        }
+
+        return telefone.replaceAll("\\D", "");
     }
 
     private UsuarioResponse mapearParaResponse(Usuario entity) {
@@ -129,7 +147,7 @@ public class UsuarioService {
 
         usuario.setNomeCompleto(perfilDTO.nomeCompleto());
         usuario.setEmail(perfilDTO.email());
-        usuario.setTelefone(perfilDTO.telefone());
+        usuario.setTelefone(limparTelefone(perfilDTO.telefone()));
 
         usuarioRepository.save(usuario);
     }

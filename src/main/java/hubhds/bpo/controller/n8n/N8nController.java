@@ -1,6 +1,6 @@
 package hubhds.bpo.controller.n8n;
 
-import hubhds.bpo.dto.assinaturaMercadoPago.SincronizarAssinatura;
+
 import hubhds.bpo.dto.categorian8n.CategoriaN8nRequest;
 import hubhds.bpo.dto.categorian8n.CategoriaN8nResponse;
 import hubhds.bpo.dto.n8n.editar.N8nAtualizarRequest;
@@ -11,7 +11,6 @@ import hubhds.bpo.model.categorian8n.CategoriaN8n;
 import hubhds.bpo.model.n8n.N8n;
 import hubhds.bpo.repository.categorian8n.CategoriaN8nRepository;
 import hubhds.bpo.repository.n8n.TransacaoN8nRepository;
-import hubhds.bpo.service.AssinaturaMercadoPagoService.AssinaturaMercadoPagoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,13 +28,13 @@ public class N8nController {
 
     private final TransacaoN8nRepository transacaoN8nRepository;
 
-    private final AssinaturaMercadoPagoService assinaturaMercadoPagoService;
+    /*private final AssinaturaMercadoPagoService assinaturaMercadoPagoService;*/
 
     private final CategoriaN8nRepository categoriaN8nRepository;
 
-    public N8nController(TransacaoN8nRepository transacaoN8nRepository, AssinaturaMercadoPagoService assinaturaMercadoPagoService, CategoriaN8nRepository categoriaN8nRepository) {
+    public N8nController(TransacaoN8nRepository transacaoN8nRepository, /*AssinaturaMercadoPagoServiceassinaturaMercadoPagoService,*/  CategoriaN8nRepository categoriaN8nRepository) {
         this.transacaoN8nRepository = transacaoN8nRepository;
-        this.assinaturaMercadoPagoService = assinaturaMercadoPagoService;
+       /* this.assinaturaMercadoPagoService = assinaturaMercadoPagoService;*/
         this.categoriaN8nRepository = categoriaN8nRepository;
     }
 
@@ -221,7 +219,7 @@ public class N8nController {
     }
 
     //nova url que atualiza status do banco de dados automaticamente (encaminhar para Emilly)
-    @PostMapping("/assinatura")
+   /* @PostMapping("/assinatura")
     public ResponseEntity<?> sincronizarAssinatura(
             @RequestBody SincronizarAssinatura sincronizarAssinatura
     ) {
@@ -240,7 +238,7 @@ public class N8nController {
                     Map.of("mensagem", e.getMessage())
             );
         }
-    }
+    }*/
 
     @GetMapping
     public ResponseEntity<List<N8n>> listarTransacoes() {

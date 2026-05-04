@@ -1,9 +1,10 @@
-package hubhds.bpo.dto.assinaturaMercadoPago;
+package hubhds.bpo.dto.assinatura;
+
 
 import java.math.BigDecimal;
 
 public record Assinatura(
-        String preApprovalId,
+        String preapprovalId,
         String initPoint,
         String sandboxInitPoint,
         String status,

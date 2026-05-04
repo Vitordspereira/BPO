@@ -1,9 +1,18 @@
 package hubhds.bpo.model.dashboard;
 
 public enum MeioPagamento {
-    PIX,
-    BOLETO,
     CREDITO,
-    DEBITO,
+    DEBITO;
 
+    public static MeioPagamento fromMercadoPago(String paymentTypeId) {
+        if ("credit_card".equalsIgnoreCase(paymentTypeId)) {
+            return CREDITO;
+        }
+
+        if ("debit_card".equalsIgnoreCase(paymentTypeId)) {
+            return DEBITO;
+        }
+
+        throw new IllegalArgumentException("Tipo de pagamento inválido: " + paymentTypeId);
+    }
 }

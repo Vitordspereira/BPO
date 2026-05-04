@@ -1,5 +1,6 @@
 package hubhds.bpo.model.usuario;
 
+import hubhds.bpo.model.cartao.Bandeira;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -36,6 +37,9 @@ public class Usuario {
     @Column(name = "nome_completo", nullable = false, length = 150)
     private String nomeCompleto;
 
+    @Column(name = "cpf", length = 14)
+    private String cpf;
+
     @Column(name = "email", nullable = false, length = 150)
     private String email;
 
@@ -50,6 +54,10 @@ public class Usuario {
 
     @Column(name = "tem_empresa", nullable = false)
     private Integer temEmpresa;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "bandeira_cartao", length = 30)
+    private Bandeira bandeira;
 
     //Campo em que o sistema usa para liberar ou bloquear acesso do usuário
     @Column(name = "assinatura_ativa")
