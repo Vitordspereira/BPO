@@ -2,27 +2,35 @@ package hubhds.bpo.service.categoria;
 
 import hubhds.bpo.dto.categoria.CategoriaRequest;
 import hubhds.bpo.dto.categoria.CategoriaResponse;
+import hubhds.bpo.dto.categoria.CategoriaUnificadaResponse;
 import hubhds.bpo.dto.categoria.categoriaComLancamento.CategoriaComLancamento;
+import hubhds.bpo.model.categoria.Categoria;
 import hubhds.bpo.model.usuario.PerfilFinanceiro;
 import hubhds.bpo.model.usuario.Usuario;
-import hubhds.bpo.model.categoria.Categoria;
-import hubhds.bpo.repository.lancamento.LancamentoRepository;
-import hubhds.bpo.repository.dashboard.DashboardRepository;
-import hubhds.bpo.repository.usuario.UsuarioRepository;
 import hubhds.bpo.repository.categoria.CategoriaRepository;
+import hubhds.bpo.repository.categorian8n.CategoriaN8nRepository;
+import hubhds.bpo.repository.dashboard.DashboardRepository;
+import hubhds.bpo.repository.lancamento.LancamentoRepository;
+import hubhds.bpo.repository.usuario.UsuarioRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.Normalizer;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class CategoriaService {
 
     @Autowired
     private CategoriaRepository categoriaRepository;
+
+    // NOVO:
+    // Esse repository permite buscar as categorias criadas pelo WhatsApp/N8N.
+    // É daqui que virá a categoria "Automatica".
+    @Autowired
+    private CategoriaN8nRepository categoriaN8nRepository;
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -68,11 +76,88 @@ public class CategoriaService {
         return new CategoriaResponse(categoria);
     }
 
-    public List<CategoriaResponse> listarPorUsuario(Long idUsuario, PerfilFinanceiro perfilFinanceiro) {
-        return categoriaRepository.findByUsuario_IdUsuarioAndPerfilFinanceiro(idUsuario, perfilFinanceiro)
-                .stream()
-                .map(CategoriaResponse::new)
-                .collect(Collectors.toList());
+    // NOVO:
+    // Esse método foi alterado para trazer categorias de dois lugares:
+    //
+    // 1. Tabela "categoria":
+    //    categorias criadas manualmente pelo usuário dentro do projeto.
+    //
+    // 2. Tabela "categoria_n8n":
+    //    categorias criadas automaticamente pelo WhatsApp/N8N,
+    //    incluindo a categoria "Automatica".
+    //
+    // A rota continua usando idUsuario e perfilFinanceiro.
+    // Exemplo:
+    // /categoria/listar/1?perfilFinanceiro=PESSOAL
+    public List<CategoriaUnificadaResponse> listarPorUsuario(Long idUsuario, PerfilFinanceiro perfilFinanceiro) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        // NOVO:
+        // Busca as categorias normais do projeto.
+        // Essas são as categorias que o usuário criou manualmente.
+        List<CategoriaUnificadaResponse> categoriasProjeto =
+                categoriaRepository.findByUsuario_IdUsuarioAndPerfilFinanceiroOrderByNomeAsc(
+                                idUsuario,
+                                perfilFinanceiro
+                        )
+                        .stream()
+                        .map(categoria -> new CategoriaUnificadaResponse(
+                                categoria.getIdCategoria(),
+                                categoria.getNome(),
+                                categoria.getTipo() != null ? categoria.getTipo().name() : null,
+                                categoria.getIcone(),
+                                categoria.getCor(),
+                                categoria.getPerfilFinanceiro() != null ? categoria.getPerfilFinanceiro().name() : null,
+                                "PROJETO"
+                        ))
+                        .toList();
+
+        // NOVO:
+        // Aqui será montada a lista de categorias vindas do N8N.
+        // Começa vazia porque pode existir usuário sem telefone cadastrado.
+        List<CategoriaUnificadaResponse> categoriasN8n = new ArrayList<>();
+
+        // NOVO:
+        // As categorias do N8N são vinculadas pelo telefone.
+        // Então pegamos o telefone do usuário para procurar em categoria_n8n.
+        if (usuario.getTelefone() != null && !usuario.getTelefone().isBlank()) {
+            categoriasN8n =
+                    categoriaN8nRepository.findByTelefoneOrderByNomeAsc(usuario.getTelefone())
+                            .stream()
+
+                            // NOVO:
+                            // Garante que vamos listar apenas categorias do mesmo perfil financeiro.
+                            // Se a tela pediu PESSOAL, só entram categorias N8N PESSOAL.
+                            // Se a tela pediu EMPRESA, só entram categorias N8N EMPRESA.
+                            .filter(categoria -> categoria.getPerfilFinanceiro() != null)
+                            .filter(categoria -> categoria.getPerfilFinanceiro().equalsIgnoreCase(perfilFinanceiro.name()))
+
+                            // NOVO:
+                            // Converte CategoriaN8n para CategoriaUnificadaResponse.
+                            // A origem "N8N" serve para o front saber que essa categoria veio do WhatsApp.
+                            .map(categoria -> new CategoriaUnificadaResponse(
+                                    categoria.getIdCategoriaN8n(),
+                                    categoria.getNome(),
+                                    categoria.getTipo(),
+                                    categoria.getIcone(),
+                                    categoria.getCor(),
+                                    categoria.getPerfilFinanceiro(),
+                                    "N8N"
+                            ))
+                            .toList();
+        }
+
+        // NOVO:
+        // Junta as duas listas:
+        // categorias criadas no projeto + categorias vindas do N8N.
+        //
+        // É aqui que a "Automatica" passa a aparecer junto com as demais.
+        List<CategoriaUnificadaResponse> resultado = new ArrayList<>();
+        resultado.addAll(categoriasProjeto);
+        resultado.addAll(categoriasN8n);
+
+        return resultado;
     }
 
     public CategoriaResponse atualizar(Long idUsuario, Long idCategoria, CategoriaRequest dto) {

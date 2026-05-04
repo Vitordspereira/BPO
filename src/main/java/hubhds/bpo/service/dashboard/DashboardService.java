@@ -192,13 +192,6 @@ public class DashboardService {
         if (dashboardRequest.tipo() == Tipo.DESPESA && dashboardRequest.meioPagamento() == null) {
             throw new RuntimeException("Meio de pagamento é obrigatório para despesas.");
         }
-
-        /*
-         * Importante:
-         * Antes o sistema obrigava idCartao sempre que fosse crédito/débito.
-         * Mas o front também trabalha com cartões/lançamentos automáticos.
-         * Por isso, agora só validamos o cartão se o idCartao vier preenchido.
-         */
     }
 
     private void vincularCartaoSeNecessario(

@@ -48,12 +48,6 @@ public class N8n {
     @Column(name = "forma_pagamento", length = 100)
     private String formaPagamento;
 
-    /*
-     @Enumerated(EnumType.STRING)
-     @Column(name = "perfil_financeiro", length = 50, nullable = false)
-     private PerfilFinanceiro perfilFinanceiro;
-    */
-
     @Column(name = "status", length = 100, nullable = false)
     private String status;
 }

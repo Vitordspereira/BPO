@@ -2,6 +2,7 @@ package hubhds.bpo.controller.categoria;
 
 import hubhds.bpo.dto.categoria.CategoriaRequest;
 import hubhds.bpo.dto.categoria.CategoriaResponse;
+import hubhds.bpo.dto.categoria.CategoriaUnificadaResponse;
 import hubhds.bpo.dto.categoria.categoriaComLancamento.CategoriaComLancamento;
 import hubhds.bpo.model.usuario.PerfilFinanceiro;
 import hubhds.bpo.service.categoria.CategoriaService;
@@ -56,7 +57,7 @@ public class CategoriaController {
             @RequestParam PerfilFinanceiro perfilFinanceiro
     ) {
         try {
-            List<CategoriaResponse> categorias = categoriaService.listarPorUsuario(idUsuario, perfilFinanceiro);
+            List<CategoriaUnificadaResponse> categorias = categoriaService.listarPorUsuario(idUsuario, perfilFinanceiro);
             return ResponseEntity.ok(categorias);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
