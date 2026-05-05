@@ -35,8 +35,6 @@ public record N8nTransacaoRequest(
         @JsonProperty("forma_pagamento")
         String formaPagamento,
 
-        String perfilFinanceiro,
-
         String status
 ) {
 }

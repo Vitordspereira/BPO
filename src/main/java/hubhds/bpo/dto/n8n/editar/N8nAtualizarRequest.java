@@ -9,7 +9,6 @@ public record N8nAtualizarRequest(
         String movimentacao,
         String tipoGasto,
         String formaPagamento,
-        String perfilFinanceiro,
         String status
 ) {
 }
