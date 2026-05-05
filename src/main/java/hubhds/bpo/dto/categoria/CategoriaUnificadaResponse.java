@@ -1,7 +1,8 @@
 package hubhds.bpo.dto.categoria;
 
 public record CategoriaUnificadaResponse(
-        Long id,
+        Long idCategoria,
+        Long idCategoriaN8n,
         String nome,
         String tipo,
         String icone,

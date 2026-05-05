@@ -77,7 +77,7 @@ public class CategoriaService {
     }
 
     // NOVO:
-    // Esse método foi alterado para trazer categorias de dois lugares:
+    // Esse metodo foi alterado para trazer categorias de dois lugares:
     //
     // 1. Tabela "categoria":
     //    categorias criadas manualmente pelo usuário dentro do projeto.
@@ -96,8 +96,6 @@ public class CategoriaService {
         List<CategoriaUnificadaResponse> resultado = new ArrayList<>();
         List<String> chavesJaAdicionadas = new ArrayList<>();
 
-        // 1. Primeiro adiciona as categorias criadas manualmente no projeto.
-        // Essas têm prioridade. Se existir "Saude" aqui, a "Saude" do N8N não entra depois.
         categoriaRepository.findByUsuario_IdUsuarioAndPerfilFinanceiroOrderByNomeAsc(
                         idUsuario,
                         perfilFinanceiro
@@ -112,6 +110,7 @@ public class CategoriaService {
                     if (!chavesJaAdicionadas.contains(chave)) {
                         resultado.add(new CategoriaUnificadaResponse(
                                 categoria.getIdCategoria(),
+                                null,
                                 categoria.getNome(),
                                 categoria.getTipo() != null ? categoria.getTipo().name() : null,
                                 categoria.getIcone(),
@@ -124,8 +123,6 @@ public class CategoriaService {
                     }
                 });
 
-        // 2. Depois adiciona categorias vindas do N8N.
-        // Só entra se ainda não existir categoria igual no projeto ou na própria lista.
         if (usuario.getTelefone() != null && !usuario.getTelefone().isBlank()) {
             categoriaN8nRepository.findByTelefoneOrderByNomeAsc(usuario.getTelefone())
                     .stream()
@@ -140,6 +137,7 @@ public class CategoriaService {
 
                         if (!chavesJaAdicionadas.contains(chave)) {
                             resultado.add(new CategoriaUnificadaResponse(
+                                    null,
                                     categoria.getIdCategoriaN8n(),
                                     categoria.getNome(),
                                     categoria.getTipo(),
