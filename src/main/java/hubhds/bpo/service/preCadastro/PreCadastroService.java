@@ -51,7 +51,6 @@ public class PreCadastroService {
 
         String emailTratado = request.email().trim().toLowerCase();
         String telefoneLimpo = limparTelefone(request.telefone());
-        String cpfLimpo = limparDocumento(request.cpf());
 
         usuarioRepository.findByEmail(emailTratado).ifPresent(usuario -> {
             throw new RuntimeException("Este e-mail já está cadastrado.");
@@ -65,7 +64,6 @@ public class PreCadastroService {
                 .nomeCompleto(request.nomeCompleto().trim())
                 .email(emailTratado)
                 .telefone(telefoneLimpo)
-                .cpf(cpfLimpo)
                 .senha(passwordEncoder.encode(request.senha()))
                 .temEmpresa(0)
                 .assinaturaAtiva(true)
@@ -99,14 +97,6 @@ public class PreCadastroService {
         }
 
         return telefone.replaceAll("\\D", "");
-    }
-
-    private String limparDocumento(String documento) {
-        if (documento == null) {
-            return "";
-        }
-
-        return documento.replaceAll("\\D", "");
     }
 }
 

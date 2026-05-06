@@ -19,9 +19,6 @@ public record UsuarioCompletaCadastro(
         @NotBlank(message = "Telefone é obrigatório")
         String telefone,
 
-        @NotBlank(message = "CPF é obrigatório")
-        String cpf,
-
         @NotBlank(message = "Senha é obrigatória")
         @Size(min = 8, message = "A senha deve conter no mínimo 8 caracteres")
         String senha

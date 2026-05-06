@@ -63,7 +63,7 @@ public class AssinaturaMercadoPagoService {
     public Assinatura criarAssinaturaAutorizadaComCartao(
             Usuario usuario,
             String tipoPlano,
-            String cardTokenId
+            String tokenCartao
     ) {
         if (usuario == null) {
             throw new RuntimeException("Usuário é obrigatório.");
@@ -77,7 +77,7 @@ public class AssinaturaMercadoPagoService {
             throw new RuntimeException("Telefone do usuário é obrigatório.");
         }
 
-        if (cardTokenId == null || cardTokenId.isBlank()) {
+        if (tokenCartao == null || tokenCartao.isBlank()) {
             throw new RuntimeException("Token do cartão é obrigatório.");
         }
 
@@ -97,7 +97,7 @@ public class AssinaturaMercadoPagoService {
         payload.put("reason", montarReason(plano));
         payload.put("external_reference", externalReference);
         payload.put("payer_email", emailTratado);
-        payload.put("card_token_id", cardTokenId);
+        payload.put("card_token_id", tokenCartao);
         payload.put("back_url", backUrl);
         payload.put("auto_recurring", autoRecurring);
         payload.put("status", "authorized");

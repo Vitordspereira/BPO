@@ -8,7 +8,6 @@ import hubhds.bpo.dto.n8n.editar.N8nAtualizarRequest;
 import hubhds.bpo.dto.n8n.editar.N8nAtualizarResponse;
 import hubhds.bpo.model.categorian8n.CategoriaN8n;
 import hubhds.bpo.model.n8n.N8n;
-import hubhds.bpo.model.usuario.Usuario;
 import hubhds.bpo.repository.categorian8n.CategoriaN8nRepository;
 import hubhds.bpo.repository.n8n.TransacaoN8nRepository;
 import hubhds.bpo.repository.usuario.UsuarioRepository;
