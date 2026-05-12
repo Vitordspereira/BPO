@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
         name = "usuario",
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_usuario_email", columnNames = "email"),
-                @UniqueConstraint(name = "uk_usuario_cpf", columnNames = "cpf"),
+                @UniqueConstraint(name = "uk_usuario_integracpf", columnNames = "cpf"),
                 @UniqueConstraint(name = "uk_usuario_cnpj", columnNames = "cnpj")
         }
 )

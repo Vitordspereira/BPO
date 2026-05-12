@@ -1,7 +1,6 @@
 package hubhds.bpo.service.AssinaturaMercadoPagoService;
 
 import hubhds.bpo.dto.assinatura.Assinatura;
-import hubhds.bpo.model.usuario.AmbienteUsuario;
 import hubhds.bpo.model.usuario.Usuario;
 import hubhds.bpo.repository.usuario.UsuarioRepository;
 import jakarta.transaction.Transactional;
@@ -360,96 +359,6 @@ public class AssinaturaMercadoPagoService {
         }
     }
 
-    // =========================================================
-    // Sincroniza assinatura e ativa/bloqueia usuário
-    // usado por webhook e rotinas manuais
-    // =========================================================
-    @Transactional
-    public Map<String, Object> sincronizarAssinatura(String preapprovalId) {
-        Map<String, Object> assinaturaMp = consultarAssinatura(preapprovalId);
-
-        String status = valor(assinaturaMp.get("status")).toLowerCase();
-        String externalReference = valor(assinaturaMp.get("external_reference"));
-
-        if (externalReference == null || externalReference.isBlank()) {
-            throw new RuntimeException("External reference não encontrada na assinatura.");
-        }
-
-        if (!externalReference.startsWith("telefone:")) {
-            throw new RuntimeException("External reference inválida: " + externalReference);
-        }
-
-        String telefone = externalReference.replace("telefone:", "").trim();
-
-        Usuario usuario = usuarioRepository.findByTelefone(telefone)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado para o telefone: " + telefone));
-
-        usuario.setMpPreapprovalId(preapprovalId);
-        usuario.setMpExternalReference(externalReference);
-        usuario.setMpStatus(status);
-        usuario.setMpAssinaturaAtualizadaEm(LocalDateTime.now());
-
-        switch (status) {
-            case "authorized":
-                usuario.setAssinaturaAtiva(true);
-                usuario.setDataInatividade(null);
-                break;
-
-            case "pending":
-            case "paused":
-            case "cancelled":
-            case "canceled":
-                usuario.setAssinaturaAtiva(false);
-
-                if (usuario.getDataInatividade() == null) {
-                    usuario.setDataInatividade(LocalDateTime.now());
-                }
-                break;
-
-            default:
-                break;
-        }
-
-        usuarioRepository.save(usuario);
-
-        Map<String, Object> retorno = new HashMap<>();
-        retorno.put("preapprovalId", preapprovalId);
-        retorno.put("telefone", telefone);
-        retorno.put("status", status);
-        retorno.put("assinaturaAtiva", usuario.getAssinaturaAtiva());
-
-        return retorno;
-    }
-
-    // =========================================================
-    // Legado: iniciar assinatura por telefone e gerar link
-    // Pode remover depois que o checkout novo substituir tudo
-    // =========================================================
-    @Transactional
-    public Assinatura iniciarAssinatura(String telefone, String plano, String payerEmail) {
-        if (telefone == null || telefone.isBlank()) {
-            throw new IllegalArgumentException("Telefone é obrigatório.");
-        }
-
-        String telefoneLimpo = limparTelefone(telefone);
-
-        Usuario usuario = usuarioRepository.findByTelefone(telefoneLimpo)
-                .orElseGet(() -> {
-                    Usuario novoUsuario = Usuario.builder()
-                            .telefone(telefoneLimpo)
-                            .senha(null)
-                            .temEmpresa(0)
-                            .assinaturaAtiva(false)
-                            .ambienteUsuario(AmbienteUsuario.PESSOAL)
-                            .build();
-
-                    return usuarioRepository.save(novoUsuario);
-                });
-
-        String planoFinal = (plano == null || plano.isBlank()) ? "MENSAL" : plano;
-
-        return assinatura(usuario.getIdUsuario(), planoFinal, payerEmail);
-    }
 
     private void validarUsuarioParaAssinatura(Usuario usuario, String payerEmail) {
         if (payerEmail == null || payerEmail.isBlank()) {

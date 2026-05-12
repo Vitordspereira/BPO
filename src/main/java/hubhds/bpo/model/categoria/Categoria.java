@@ -26,7 +26,7 @@ public class Categoria {
     @Column(name = "nome", nullable = false, length = 100)
     private String nome;
 
-    @Column(name = "slug", length = 100, unique = true)
+    @Column(name = "slug", length = 100)
     private String slug;
 
     @Enumerated(EnumType.STRING)
