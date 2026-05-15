@@ -395,10 +395,21 @@ public class N8nController {
         return switch (v) {
             case "PIX" -> "PIX";
             case "DINHEIRO" -> "DINHEIRO";
-            case "CARTAO_CREDITO" -> "CARTAO_CREDITO";
-            case "CARTAO_DEBITO" -> "CARTAO_DEBITO";
-            case "TRANSFERENCIA" -> "TRANSFERENCIA";
             case "BOLETO" -> "BOLETO";
+            case "TRANSFERENCIA", "TRANSFERENCIA_BANCARIA", "TED", "DOC" -> "TRANSFERENCIA";
+
+            case "CREDITO",
+                 "CARTAO_CREDITO",
+                 "CARTAO_DE_CREDITO",
+                 "CREDIT",
+                 "CREDIT_CARD" -> "CARTAO_CREDITO";
+
+            case "DEBITO",
+                 "CARTAO_DEBITO",
+                 "CARTAO_DE_DEBITO",
+                 "DEBIT",
+                 "DEBIT_CARD" -> "CARTAO_DEBITO";
+
             default -> null;
         };
     }
