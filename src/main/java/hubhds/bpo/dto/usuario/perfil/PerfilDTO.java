@@ -7,6 +7,9 @@ public record PerfilDTO(
         String email,
         String telefone,
         AmbienteUsuario ambienteUsuario,
-        Integer temEmpresa
-) {
+        Integer temEmpresa,
+        String cidade,
+        String profissao,
+        String bio
+        ) {
 }

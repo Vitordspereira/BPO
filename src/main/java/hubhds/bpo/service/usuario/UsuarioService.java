@@ -163,7 +163,10 @@ public class UsuarioService {
                 usuario.getAmbienteUsuario() != null
                         ? usuario.getAmbienteUsuario()
                         : AmbienteUsuario.PESSOAL,
-                usuario.getTemEmpresa()
+                usuario.getTemEmpresa(),
+                usuario.getCidade(),
+                usuario.getProfissao(),
+                usuario.getBio()
         );
     }
 

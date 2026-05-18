@@ -55,6 +55,15 @@ public class Usuario {
     @Column(name = "tem_empresa", nullable = false)
     private Integer temEmpresa;
 
+    @Column(name = "cidade", length = 100)
+    private String cidade;
+
+    @Column(name = "profissao", length = 70)
+    private String profissao;
+
+    @Column(name = "bio", length = 300)
+    private String bio;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "bandeira_cartao", length = 30)
     private Bandeira bandeira;
