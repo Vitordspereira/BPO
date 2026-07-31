@@ -17,8 +17,9 @@ public interface CategoriaN8nRepository extends JpaRepository<CategoriaN8n, Long
             String telefone
     );
 
-    Optional<CategoriaN8n> findByTelefoneAndNomeIgnoreCase(
+    Optional<CategoriaN8n> findByTelefoneAndSlugAndPerfilFinanceiroIgnoreCase(
             String telefone,
-            String nome
+            String slug,
+            String perfilFinanceiro
     );
 }

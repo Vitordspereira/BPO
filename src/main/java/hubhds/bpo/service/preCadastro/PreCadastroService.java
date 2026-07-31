@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Service
 public class PreCadastroService {
@@ -97,6 +98,35 @@ public class PreCadastroService {
         }
 
         return telefone.replaceAll("\\D", "");
+    }
+
+    public Map<String, Object> validarToken(String token){
+        if (token == null || token.isBlank()) {
+            throw new RuntimeException("Token é obrigatório");
+        }
+
+        PreCadastro preCadastro = preCadastroRepository.findByToken(token.trim())
+                .orElseThrow(() -> new RuntimeException("Token não encontrado"));
+
+        if (Boolean.TRUE.equals(preCadastro.getUsado())) {
+            throw new RuntimeException("Este token já foi utilizado");
+        }
+
+        if (preCadastro.getExpiracao().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Este token expirou");
+        }
+
+        boolean liberado =
+                "authorized".equalsIgnoreCase(preCadastro.getMpStatus()) ||
+                        "approved".equalsIgnoreCase(preCadastro.getMpStatus());
+
+        return Map.of(
+                "liberado", liberado,
+                "email", preCadastro.getPayerEmail(),
+                "status", preCadastro.getMpStatus(),
+                "token", preCadastro.getToken(),
+                "mensagem", liberado ? "Cadastro liberado." : "Pagamento ainda não confirmado."
+        );
     }
 }
 

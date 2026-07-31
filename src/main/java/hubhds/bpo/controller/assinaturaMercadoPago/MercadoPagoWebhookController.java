@@ -10,7 +10,8 @@ import java.util.Map;
 @CrossOrigin(origins="*")
 @RestController
 @RequestMapping("/webhooks")
-public class MercadoPagoWebhookController {
+public class
+MercadoPagoWebhookController {
 
     private final MercadoPagoWebhookService mercadoPagoWebhookService;
 

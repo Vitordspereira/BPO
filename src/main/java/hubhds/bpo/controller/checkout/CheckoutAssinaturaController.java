@@ -43,4 +43,13 @@ public class CheckoutAssinaturaController {
             return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
         }
     }
+
+    @GetMapping("/pre-cadastro/validar")
+    public ResponseEntity<?> validarPreCadastro(@RequestParam String token) {
+        try {
+            return ResponseEntity.ok(preCadastroService.validarToken(token));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("mensagem",e.getMessage()));
+        }
+    }
 }

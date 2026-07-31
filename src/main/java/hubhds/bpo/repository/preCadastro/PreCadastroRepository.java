@@ -11,4 +11,8 @@ public interface PreCadastroRepository extends JpaRepository<PreCadastro, Long> 
 
     Optional<PreCadastro> findByToken(String token);
 
+    Optional<PreCadastro> findByMpExternalReference(String mpExternalReference);
+
+    Optional<PreCadastro> findByMpPreapprovalId(String mpPreapprovalId);
+
 }

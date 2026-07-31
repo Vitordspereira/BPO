@@ -10,7 +10,6 @@ import hubhds.bpo.model.categorian8n.CategoriaN8n;
 import hubhds.bpo.model.n8n.N8n;
 import hubhds.bpo.repository.categorian8n.CategoriaN8nRepository;
 import hubhds.bpo.repository.n8n.TransacaoN8nRepository;
-import hubhds.bpo.repository.usuario.UsuarioRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +19,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -28,16 +29,13 @@ public class N8nController {
 
     private final TransacaoN8nRepository transacaoN8nRepository;
     private final CategoriaN8nRepository categoriaN8nRepository;
-    private final UsuarioRepository usuarioRepository;
 
     public N8nController(
             TransacaoN8nRepository transacaoN8nRepository,
-            CategoriaN8nRepository categoriaN8nRepository,
-            UsuarioRepository usuarioRepository
+            CategoriaN8nRepository categoriaN8nRepository
     ) {
         this.transacaoN8nRepository = transacaoN8nRepository;
         this.categoriaN8nRepository = categoriaN8nRepository;
-        this.usuarioRepository = usuarioRepository;
     }
 
     @PostMapping("/{telefone}")
@@ -45,7 +43,9 @@ public class N8nController {
             @PathVariable String telefone,
             @RequestBody CategoriaN8nRequest categoriaN8nRequest
     ) {
-        if (telefone == null || telefone.isBlank()) {
+        String telefoneTratado = trimToNull(telefone);
+
+        if (telefoneTratado == null) {
             return ResponseEntity.badRequest().body("telefone é obrigatório.");
         }
 
@@ -59,18 +59,34 @@ public class N8nController {
 
         String nome = categoriaN8nRequest.nome().trim();
         String tipo = categoriaN8nRequest.tipo().trim().toUpperCase();
+        String slug = gerarSlugCategoria(nome);
+
+        String perfilFinanceiro = normalizarPerfilFinanceiroCategoria(
+                categoriaN8nRequest.perfilFinanceiro()
+        );
+
+        if (perfilFinanceiro == null) {
+            perfilFinanceiro = "PESSOAL";
+        }
 
         boolean categoriaJaExiste = categoriaN8nRepository
-                .findByTelefoneAndNomeIgnoreCase(telefone, nome)
+                .findByTelefoneAndSlugAndPerfilFinanceiroIgnoreCase(
+                        telefoneTratado,
+                        slug,
+                        perfilFinanceiro
+                )
                 .isPresent();
 
         if (categoriaJaExiste) {
-            return ResponseEntity.badRequest().body("Categoria já cadastrada para este telefone.");
+            return ResponseEntity.badRequest().body(
+                    "Categoria já cadastrada para este telefone e perfil financeiro."
+            );
         }
 
         CategoriaN8n categoriaN8n = CategoriaN8n.builder()
-                .telefone(telefone.trim())
+                .telefone(telefoneTratado)
                 .nome(nome)
+                .slug(slug)
                 .tipo(tipo)
                 .icone(
                         categoriaN8nRequest.icone() != null
@@ -82,11 +98,7 @@ public class N8nController {
                                 ? categoriaN8nRequest.cor().trim()
                                 : null
                 )
-                .perfilFinanceiro(
-                        categoriaN8nRequest.perfilFinanceiro() != null
-                                ? categoriaN8nRequest.perfilFinanceiro().trim().toUpperCase()
-                                : null
-                )
+                .perfilFinanceiro(perfilFinanceiro)
                 .build();
 
         CategoriaN8n salva = categoriaN8nRepository.save(categoriaN8n);
@@ -140,16 +152,26 @@ public class N8nController {
         }
 
         if (categoria == null) {
-            categoria = "automatica";
+            categoria = "Automática";
         }
 
-        if (formaPagamento == null) {
-            formaPagamento = "PIX";
+        /*
+         * Regra nova:
+         * Tanto DESPESA quanto RECEITA precisam de tipo_gasto.
+         * Isso evita receita de EMPRESA aparecer também em PESSOAL.
+         */
+        if (tipoGasto == null) {
+            erros.append("tipo_gasto deve ser EMPRESA ou PESSOAL; ");
         }
 
+        /*
+         * Forma de pagamento só é obrigatória para DESPESA.
+         * Se vier vazia em DESPESA, assume PIX.
+         * Se for RECEITA, não usa forma de pagamento.
+         */
         if ("DESPESA".equals(movimentacao)) {
-            if (tipoGasto == null) {
-                erros.append("tipo_gasto deve ser EMPRESA ou PESSOAL quando a movimentacao for DESPESA; ");
+            if (formaPagamento == null) {
+                formaPagamento = "PIX";
             }
         } else if ("RECEITA".equals(movimentacao)) {
             formaPagamento = null;
@@ -167,22 +189,12 @@ public class N8nController {
             );
         }
 
-        final String telefoneFinal = telefone;
-        final String categoriaFinal = categoria;
-        final String movimentacaoFinal = movimentacao;
-        final String tipoGastoFinal = tipoGasto;
-
-        categoriaN8nRepository.findByTelefoneAndNomeIgnoreCase(telefone, categoria)
-                .orElseGet(() -> categoriaN8nRepository.save(
-                        CategoriaN8n.builder()
-                                .telefone(telefoneFinal)
-                                .nome(categoriaFinal)
-                                .tipo(movimentacaoFinal)
-                                .icone(null)
-                                .cor(null)
-                                .perfilFinanceiro(tipoGastoFinal)
-                                .build()
-                ));
+        CategoriaN8n categoriaEncontrada = buscarOuCriarCategoriaN8n(
+                telefone,
+                categoria,
+                movimentacao,
+                tipoGasto
+        );
 
         String transactionId = "trx_" + UUID.randomUUID();
 
@@ -193,7 +205,7 @@ public class N8nController {
         transacao.setValor(valor);
         transacao.setDataTransacao(dataTransacao);
         transacao.setDescricao(descricao);
-        transacao.setCategoria(categoria);
+        transacao.setCategoria(categoriaEncontrada.getNome());
         transacao.setMovimentacao(movimentacao);
         transacao.setTipoGasto(tipoGasto);
         transacao.setFormaPagamento(formaPagamento);
@@ -286,10 +298,6 @@ public class N8nController {
             transacao.setDescricao(n8nAtualizarRequest.descricao().trim());
         }
 
-        if (n8nAtualizarRequest.categoria() != null && !n8nAtualizarRequest.categoria().isBlank()) {
-            transacao.setCategoria(n8nAtualizarRequest.categoria().trim());
-        }
-
         if (n8nAtualizarRequest.movimentacao() != null && !n8nAtualizarRequest.movimentacao().isBlank()) {
             String movimentacao = normalizarMovimentacao(n8nAtualizarRequest.movimentacao());
 
@@ -298,6 +306,10 @@ public class N8nController {
             }
 
             transacao.setMovimentacao(movimentacao);
+
+            if ("RECEITA".equals(movimentacao)) {
+                transacao.setFormaPagamento(null);
+            }
         }
 
         if (n8nAtualizarRequest.tipoGasto() != null && !n8nAtualizarRequest.tipoGasto().isBlank()) {
@@ -317,7 +329,40 @@ public class N8nController {
                 return ResponseEntity.badRequest().body("forma_pagamento inválida.");
             }
 
-            transacao.setFormaPagamento(formaPagamento);
+            if (!"RECEITA".equalsIgnoreCase(transacao.getMovimentacao())) {
+                transacao.setFormaPagamento(formaPagamento);
+            }
+        }
+
+        if (
+                transacao.getMovimentacao() != null
+                        && transacao.getTipoGasto() == null
+                        && (
+                        "DESPESA".equalsIgnoreCase(transacao.getMovimentacao())
+                                || "RECEITA".equalsIgnoreCase(transacao.getMovimentacao())
+                )
+        ) {
+            return ResponseEntity.badRequest().body("tipo_gasto deve ser EMPRESA ou PESSOAL.");
+        }
+
+        if (n8nAtualizarRequest.categoria() != null && !n8nAtualizarRequest.categoria().isBlank()) {
+            CategoriaN8n categoriaEncontrada = buscarOuCriarCategoriaN8n(
+                    transacao.getTelefone(),
+                    n8nAtualizarRequest.categoria().trim(),
+                    transacao.getMovimentacao(),
+                    transacao.getTipoGasto()
+            );
+
+            transacao.setCategoria(categoriaEncontrada.getNome());
+        } else if (transacao.getCategoria() != null && !transacao.getCategoria().isBlank()) {
+            CategoriaN8n categoriaEncontrada = buscarOuCriarCategoriaN8n(
+                    transacao.getTelefone(),
+                    transacao.getCategoria(),
+                    transacao.getMovimentacao(),
+                    transacao.getTipoGasto()
+            );
+
+            transacao.setCategoria(categoriaEncontrada.getNome());
         }
 
         if (n8nAtualizarRequest.status() != null && !n8nAtualizarRequest.status().isBlank()) {
@@ -354,6 +399,84 @@ public class N8nController {
         transacaoN8nRepository.delete(transacao);
 
         return ResponseEntity.ok("Transação " + transacao.getTransactionId() + " excluída com sucesso.");
+    }
+
+    private CategoriaN8n buscarOuCriarCategoriaN8n(
+            String telefone,
+            String nomeCategoria,
+            String movimentacao,
+            String tipoGasto
+    ) {
+        String telefoneTratado = trimToNull(telefone);
+        String nomeTratadoTemp = trimToNull(nomeCategoria);
+
+        if (nomeTratadoTemp == null) {
+            nomeTratadoTemp = "Automática";
+        }
+
+        final String nomeTratado = nomeTratadoTemp;
+        final String slug = gerarSlugCategoria(nomeTratado);
+        final String perfilFinanceiro = definirPerfilFinanceiroCategoria(tipoGasto);
+        final String movimentacaoFinal = movimentacao;
+        final String telefoneFinal = telefoneTratado;
+
+        return categoriaN8nRepository
+                .findByTelefoneAndSlugAndPerfilFinanceiroIgnoreCase(
+                        telefoneFinal,
+                        slug,
+                        perfilFinanceiro
+                )
+                .orElseGet(() -> categoriaN8nRepository.save(
+                        CategoriaN8n.builder()
+                                .telefone(telefoneFinal)
+                                .nome(nomeTratado)
+                                .slug(slug)
+                                .tipo(movimentacaoFinal)
+                                .icone(null)
+                                .cor(null)
+                                .perfilFinanceiro(perfilFinanceiro)
+                                .build()
+                ));
+    }
+
+    private String definirPerfilFinanceiroCategoria(String tipoGasto) {
+        String tipoTratado = normalizarTipoGasto(tipoGasto);
+
+        if (tipoTratado == null) {
+            throw new RuntimeException("tipo_gasto é obrigatório para definir se é PESSOAL ou EMPRESA.");
+        }
+
+        return tipoTratado;
+    }
+
+    private String normalizarPerfilFinanceiroCategoria(String perfilFinanceiro) {
+        String valor = normalizarBase(perfilFinanceiro);
+
+        if (valor == null) {
+            return null;
+        }
+
+        return switch (valor) {
+            case "EMPRESA" -> "EMPRESA";
+            case "PESSOAL" -> "PESSOAL";
+            default -> null;
+        };
+    }
+
+    private String gerarSlugCategoria(String nome) {
+        if (nome == null) return null;
+
+        String texto = nome.trim();
+
+        if (texto.isEmpty()) return null;
+
+        texto = java.text.Normalizer.normalize(texto, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
+
+        return texto.toLowerCase()
+                .replaceAll("[^a-z0-9]+", "_")
+                .replaceAll("^_+", "")
+                .replaceAll("_+$", "");
     }
 
     private String trimToNull(String valor) {

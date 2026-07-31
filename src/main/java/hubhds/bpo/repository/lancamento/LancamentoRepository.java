@@ -10,10 +10,6 @@ import java.util.List;
 @Repository
 public interface LancamentoRepository extends JpaRepository<Lancamento, Long> {
 
-    List<Lancamento> findByCategoriaIdCategoria(Long idCategoria);
-
-    List<Lancamento> findByUsuarioIdUsuario(Long idUsuario);
-
     List<Lancamento> findByUsuarioIdUsuarioOrderByDataTransacaoDesc(Long idUsuario);
 
     List<Lancamento> findByUsuarioIdUsuarioAndTipoGastoOrderByDataTransacaoDesc(
@@ -22,4 +18,5 @@ public interface LancamentoRepository extends JpaRepository<Lancamento, Long> {
     );
 
     void deleteByCategoriaIdCategoria(Long idCategoria);
+
 }

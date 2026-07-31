@@ -27,6 +27,9 @@ public class CategoriaN8n {
     @Column(name = "nome", nullable = false, length = 100)
     private String nome;
 
+    @Column(name = "slug", length = 120)
+    private String slug;
+
     @Column(name = "tipo", length = 30)
     private String tipo;
 

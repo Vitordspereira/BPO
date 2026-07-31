@@ -11,11 +11,6 @@ import java.util.Optional;
 @Repository
 public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
 
-    List<Categoria> findByUsuario_IdUsuarioAndPerfilFinanceiro(
-            Long idUsuario,
-            PerfilFinanceiro perfilFinanceiro
-    );
-
     List<Categoria> findByUsuario_IdUsuarioAndPerfilFinanceiroOrderByNomeAsc(
             Long idUsuario,
             PerfilFinanceiro perfilFinanceiro
